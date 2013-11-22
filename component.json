@@ -1,0 +1,15 @@
+{
+  "name": "oz",
+  "dependencies": {
+    "component/dom":"*",
+    "discore/closest": "*",
+    "component/clone": "*"
+  },
+  "development": {
+    "component/assert": "*"
+  },
+  "scripts": [
+    "index.js"
+  ],
+  "main": "index.js"
+}
