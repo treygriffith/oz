@@ -27,7 +27,7 @@ function Oz(template) {
   this.thisSymbol = '@';
   this.separator = ':';
   this.template = domify(template);
-  this.tags = clone(tags);
+  this.tags = clone(Oz.tags);
   this.cached = [];
   this.rendered = [];
 }
@@ -113,7 +113,7 @@ Oz.render = function (template, ctx) {
  * Default template options
  */
 
-var tags = {
+Oz.tags = {
 
   // TODO: multiple attributes on the same tag
   attr: {
