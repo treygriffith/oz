@@ -2,11 +2,15 @@
  * Module dependencies
  */
 
-var dom = require('dom')
+var domify = require('domify')
   , closest = require('closest')
   , children = require('children')
   , matches = require('matches-selector')
-  , clone = require('clone');
+  , clone = require('clone')
+  , findWithSelf = require('find-with-self')
+  , text = require('text')
+  , attr = require('attr')
+  , css = require('css');
 
 /**
  * Exports
@@ -21,8 +25,11 @@ module.exports = Oz;
 function Oz(template) {
   if(!(this instanceof Oz)) return new Oz(template);
   this.thisSymbol = '@';
-  this.template = dom(template);
+  this.separator = ':';
+  this.template = domify(template);
   this.tags = clone(tags);
+  this.cached = [];
+  this.rendered = [];
 }
 
 /**
@@ -30,7 +37,68 @@ function Oz(template) {
  */
 
 Oz.prototype.render = function (ctx) {
-  return render(this.template.clone(), ctx, this.thisSymbol, this.tags);
+  var self = this
+    , template = this.template.cloneNode(true)
+    , out = [];
+
+  this.cache = [];
+
+  if(isFragment(template)) {
+
+    children(template).forEach(function (el) {
+      out = out.concat(self._render(el, ctx));
+    });
+
+  } else {
+    out = out.concat(self._render(template, ctx));
+  }
+
+  this.rendered = out;
+
+  return out;
+};
+
+/**
+ * Update template
+ */
+
+Oz.prototype.update = function (prop, value) {
+ // updating probably needs to happen at the same level rendering does if it's going to be fast
+ // this is where we need our natural object listener
+};
+
+/**
+ * Iterative Rendering function
+ */
+
+Oz.prototype._render = function (template, ctx, ignoreCache) {
+  var self = this
+    , tags = this.tags
+    , thisSymbol = this.thisSymbol
+    , tagKeys = Object.keys(tags)
+    , tmp;
+
+  ctx = ctx || {};
+
+  if(~this.cache.indexOf(template) && !ignoreCache) {
+    return this.cache[this.cache.indexOf(template)];
+  }
+
+  tmp = wrap(template);
+
+  tagKeys.forEach(function (key) {
+    var selector = '[' + tags[key].attr + ']';
+    
+    findWithSelf(template, selector).filter(filterRoot(tagKeys, template)).forEach(function (el) {
+      var prop = attr(el).get(tags[key].attr);
+
+      tags[key].render.call(self, el, ctx, prop);
+    });
+  });
+
+  this.cache.push(unwrap(tmp));
+
+  return this.cache[this.cache.length - 1];
 };
 
 /**
@@ -38,160 +106,155 @@ Oz.prototype.render = function (ctx) {
  */
 
 Oz.render = function (template, ctx) {
-  var t = new Oz(template);
-
-  return t.render(ctx);
+  return (new Oz(template)).render(ctx);
 };
-
-/**
- * Iterative Rendering function
- */
-
-function render(template, ctx, thisSymbol, tags) {
-  ctx = ctx || {};
-
-  var tagKeys = Object.keys(tags)
-    , tmp
-    , ret;
-
-  if(!template.length()) return template;
-
-  tmp = wrap(template);
-
-  tagKeys.forEach(function (key) {
-    var selector = '[' + tags[key].attr + ']';
-    
-    findWithSelf(template, selector).select(filterRoot(tagKeys, template.get(0))).each(function (el) {
-      var prop = el.attr(tags[key].attr)
-        , val = prop === thisSymbol ? ctx : ctx[prop];
-
-      tags[key].render(el, val, thisSymbol, tags);
-    });
-  });
-
-  console.log(tmp.html());
-
-  return unwrap(tmp);
-}
 
 /**
  * Default template options
  */
 
 var tags = {
+
+  // TODO: multiple attributes on the same tag
+  attr: {
+    attr: 'oz-attr',
+    render: function (el, ctx, prop) {
+      var parts = prop.split(this.separator)
+        , attribute = parts[0]
+        , val = get(ctx, parts[1], this.thisSymbol)
+        , self = this;
+
+      attr(el).set(attribute, val);
+
+      children(el).forEach(function (child) {
+        self._render(child, ctx);
+      });
+    }
+  },
+
   object: {
     attr: 'oz',
-    render: function (el, val, thisSymbol, tags) {
-      if(!val) el.css('display', 'none');
+    render: function (el, ctx, prop) {
+      var val = get(ctx, prop, this.thisSymbol)
+        , self = this;
 
-      el.find('*').each(function (list) {
-        render(list, val, thisSymbol, tags);
+      if(!val) hide(el);
+
+      children(el).forEach(function (child) {
+        self._render(child, val, true);
       });
     }
   },
+
   bool: {
     attr: 'oz-if',
-    render: function (el, val, thisSymbol, tags) {
-      if(!val || (Array.isArray(val) && val.length === 0)) el.css('display', 'none');
+    render: function (el, ctx, prop) {
+      var val = get(ctx, prop, this.thisSymbol)
+        , self = this;
 
-      el.find('*').each(function (list) {
-        render(list, val, thisSymbol, tags);
+      if(!val || (Array.isArray(val) && val.length === 0)) hide(el);
+
+      children(el).forEach(function (child) {
+        self._render(child, ctx);
       });
     }
   },
+
   array: {
     attr: 'oz-each',
-    render: function (el, val, thisSymbol, tags) {
-      var newEl;
+    render: function (el, ctx, prop) {
+      var newEl
+        , val = get(ctx, prop, this.thisSymbol)
+        , self = this;
 
-      if(val.length) {
+      for(var i=0; i<val.length; i++) {
+        newEl = el.cloneNode(true);
 
-        for(var i=0; i<val.length; i++) {
-          newEl = el.clone();
+        // mark this as a non-template copy
+        attr(newEl).set('oz-each-index', i);
 
-          // insert the new one above the old one
-          // this preserves the ordering of the array
-          el.get(0).parentNode.insertBefore(newEl.get(0), el.get(0));
+        // insert the new one above the old one
+        // this preserves the ordering of the array
+        el.parentNode.insertBefore(newEl, el);
 
-          newEl.find('*').each(function (list) {
-            render(list, val[i], thisSymbol, tags);
-          });
-        }
+        children(newEl).forEach(function (child) {
+          self._render(child, val[i], true);
+        });
       }
 
-      // remove template element
-      el.remove();
+      // hide template element
+      hide(el);
     }
   },
+
   string: {
     attr: 'oz-text',
-    render: function (el, val, thisSymbol, tags) {
-      el.text(String(val));
+    render: function (el, ctx, prop) {
+      var val = get(ctx, prop, this.thisSymbol)
+        , self = this;
 
-      el.find('*').each(function (list) {
-        render(list, null, thisSymbol, tags);
+      text(el, String(val));
+
+      children(el).forEach(function (child) {
+        self._render(child, ctx);
       });
     }
   }
+
 };
 
 /**
  * Utility functions
  */
 
+// get the value of a property in a context
+function get(ctx, prop, thisSymbol) {
+  var parts = prop.split('.')
+    , val = ctx;
+
+  parts.forEach(function (part) {
+    if(part !== thisSymbol) val = ctx[part];
+  });
+
+  return val;
+}
+
 // wrap the template in a temporary div so we can capture created elements (from arrays)
 function wrap(template) {
-  var tmp = dom("<div></div>");
+  var tmp = document.createDocumentFragment()
+    , nearest = closest(template, '*');
 
-  // put the tmp div in the templates place as a placeholder
-  if(closest(template.get(0), '*')) {
-    dom(closest(template.get(0), '*')).append(tmp);
-  }
+  tmp.appendChild(template);
 
-  tmp.append(template);
+  if(nearest) nearest.appendChild(tmp);
 
   return tmp;
 }
 
 // remove the temporary div and put the rendered elements back in their correct place
 function unwrap(tmp) {
-  var ret = children(tmp.get(0));
-
-  if(closest(tmp.get(0), '*')) {
-    dom(closest(tmp.get(0), '*')).append(ret);
-  }
-
-  tmp.remove();
-
-  return ret;
+  return children(tmp);
 }
 
 function filterRoot(tagKeys, root) {
   return function (el) {
     for(var i=0; i<tagKeys.length; i++) {
 
-      var closestEl = closest(el.get(0), '[' + tags[tagKeys[i]].attr + ']', true, root);
+      var closestEl = closest(el, '[' + tags[tagKeys[i]].attr + ']', true, root);
 
-      if(closestEl != null && closestEl !== el.get(0)) return false;
+      if(closestEl != null && closestEl !== el) return false;
     }
 
     return true;
   };
 }
 
-function findWithSelf(list, selector) {
-  var selected = list.find(selector);
+function isFragment(el) {
+  return el.nodeType === 11;
+}
 
-  if(matches(list.get(0), selector)) {
-
-    // transform dom list to an array of nodes
-    selected = selected.map(function (el) {
-      return el.get(0);
-    });
-
-    // create a new dom list from the combination of the old array and the self node
-    selected = dom(selected.concat(list.get(0)));
-  }
-  
-  return selected;
+function hide(el) {
+  css(el, {
+    display: 'none'
+  });
 }
