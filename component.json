@@ -3,10 +3,12 @@
   "dependencies": {
     "component/dom":"*",
     "discore/closest": "*",
-    "component/clone": "*"
+    "component/clone": "*",
+    "component/matches-selector": "*"
   },
   "development": {
-    "component/assert": "*"
+    "component/assert": "*",
+    "component/emitter": "*"
   },
   "scripts": [
     "index.js"

@@ -4,6 +4,23 @@ var Emitter = require('emitter');
 var assert = require('assert');
 
 describe('Oz.render(template, context)', function(){
+  it('should set text values', function(){
+    var el = Oz.render('<div><p oz-text="name"></p></div>', { name: 'Tobi' });
+    assert('Tobi' == el.get(0).children[0].textContent);
+    console.log("Test 1 done");
+  });
+
+  it('should set text values in the context of objects', function(){
+    console.log("test 2 starting");
+    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: { name: 'Tobi' }, name: 'John' });
+    console.log(el.get(0));
+    assert('Tobi' == el.get(0).children[0].textContent);
+  });
+});
+
+
+/*
+describe('Oz.render(template, context)', function(){
   it('should set values on render', function(){
     var el = Oz.render('<div><p oz-text="name"></p></div>', { name: 'Tobi' });
     assert('Tobi' == el.get(0).children[0].textContent);
@@ -263,4 +280,4 @@ describe('data-[attr]', function(){
     user.emit('change name');
     assert('LOKI' == el.children[0].textContent);
   })
-})
+})*/
