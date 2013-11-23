@@ -4,6 +4,7 @@
 
 var dom = require('dom')
   , closest = require('closest')
+  , children = require('children')
   , matches = require('matches-selector')
   , clone = require('clone');
 
@@ -49,29 +50,28 @@ Oz.render = function (template, ctx) {
 function render(template, ctx, thisSymbol, tags) {
   ctx = ctx || {};
 
-  var tagKeys = Object.keys(tags);
-
-  console.log("template", template.get(0));
-  console.log("context", ctx);
+  var tagKeys = Object.keys(tags)
+    , tmp
+    , ret;
 
   if(!template.length()) return template;
 
+  tmp = wrap(template);
+
   tagKeys.forEach(function (key) {
     var selector = '[' + tags[key].attr + ']';
-
-    console.log(key, findWithSelf(template, selector));
     
     findWithSelf(template, selector).select(filterRoot(tagKeys, template.get(0))).each(function (el) {
       var prop = el.attr(tags[key].attr)
         , val = prop === thisSymbol ? ctx : ctx[prop];
 
-      console.log(key, el, prop, val);
-
       tags[key].render(el, val, thisSymbol, tags);
     });
   });
 
-  return template;
+  console.log(tmp.html());
+
+  return unwrap(tmp);
 }
 
 /**
@@ -85,7 +85,6 @@ var tags = {
       if(!val) el.css('display', 'none');
 
       el.find('*').each(function (list) {
-        console.log("val", val);
         render(list, val, thisSymbol, tags);
       });
     }
@@ -103,18 +102,24 @@ var tags = {
   array: {
     attr: 'oz-each',
     render: function (el, val, thisSymbol, tags) {
-      if(Array.isArray(val) && val.length) {
-        // need some way to reference the dup'ed el's so that the other parts can put their shit in
-        val.forEach(function (val) {
-          var newEl = el.clone();
-          newEl.insertAfter(el);
+      var newEl;
+
+      if(val.length) {
+
+        for(var i=0; i<val.length; i++) {
+          newEl = el.clone();
+
+          // insert the new one above the old one
+          // this preserves the ordering of the array
+          el.get(0).parentNode.insertBefore(newEl.get(0), el.get(0));
 
           newEl.find('*').each(function (list) {
-            render(list, val, thisSymbol, tags);
+            render(list, val[i], thisSymbol, tags);
           });
-        });
+        }
       }
 
+      // remove template element
       el.remove();
     }
   },
@@ -122,8 +127,6 @@ var tags = {
     attr: 'oz-text',
     render: function (el, val, thisSymbol, tags) {
       el.text(String(val));
-
-      console.log("rendering ", el.get(0), val);
 
       el.find('*').each(function (list) {
         render(list, null, thisSymbol, tags);
@@ -136,9 +139,37 @@ var tags = {
  * Utility functions
  */
 
+// wrap the template in a temporary div so we can capture created elements (from arrays)
+function wrap(template) {
+  var tmp = dom("<div></div>");
+
+  // put the tmp div in the templates place as a placeholder
+  if(closest(template.get(0), '*')) {
+    dom(closest(template.get(0), '*')).append(tmp);
+  }
+
+  tmp.append(template);
+
+  return tmp;
+}
+
+// remove the temporary div and put the rendered elements back in their correct place
+function unwrap(tmp) {
+  var ret = children(tmp.get(0));
+
+  if(closest(tmp.get(0), '*')) {
+    dom(closest(tmp.get(0), '*')).append(ret);
+  }
+
+  tmp.remove();
+
+  return ret;
+}
+
 function filterRoot(tagKeys, root) {
   return function (el) {
     for(var i=0; i<tagKeys.length; i++) {
+
       var closestEl = closest(el.get(0), '[' + tags[tagKeys[i]].attr + ']', true, root);
 
       if(closestEl != null && closestEl !== el.get(0)) return false;

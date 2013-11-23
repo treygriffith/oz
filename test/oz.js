@@ -5,16 +5,22 @@ var assert = require('assert');
 
 describe('Oz.render(template, context)', function(){
   it('should set text values', function(){
-    var el = Oz.render('<div><p oz-text="name"></p></div>', { name: 'Tobi' });
-    assert('Tobi' == el.get(0).children[0].textContent);
-    console.log("Test 1 done");
+    var el = Oz.render('<div><p oz-text="name"></p></div>', { name: 'Tobi' })[0];
+    assert('Tobi' == el.children[0].textContent);
   });
 
   it('should set text values in the context of objects', function(){
     console.log("test 2 starting");
-    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: { name: 'Tobi' }, name: 'John' });
-    console.log(el.get(0));
-    assert('Tobi' == el.get(0).children[0].textContent);
+    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: { name: 'Tobi' }, name: 'John' })[0];
+    console.log(el);
+    assert('Tobi' == el.children[0].textContent);
+  });
+
+  it('should set text values as array elements', function(){
+    console.log("test 3 starting");
+    var el = Oz.render('<div oz-each="names"><p oz-text="@"></p></div>', { names: ['Tobi', 'Paul']});
+    assert('Tobi' == el[0].children[0].textContent);
+    assert('Paul' == el[1].children[0].textContent);
   });
 });
 

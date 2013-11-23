@@ -4,7 +4,8 @@
     "component/dom":"*",
     "discore/closest": "*",
     "component/clone": "*",
-    "component/matches-selector": "*"
+    "component/matches-selector": "*",
+    "ramitos/children": "*"
   },
   "development": {
     "component/assert": "*",
