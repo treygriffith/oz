@@ -5,44 +5,44 @@ var assert = require('assert');
 
 describe('Rendering', function(){
   it('should set text values', function(){
-    var el = Oz('<div><p oz-text="name"></p></div>', { name: 'Tobi' })[0];
+    var el = Oz.render('<div><p oz-text="name"></p></div>', { name: 'Tobi' })[0];
     assert('Tobi' == el.children[0].textContent);
   });
 
   it('should set text values in the context of objects', function(){
-    var el = Oz('<div oz="person"><p oz-text="name"></p></div>', { person: { name: 'Tobi' }, name: 'John' })[0];
+    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: { name: 'Tobi' }, name: 'John' })[0];
     assert('Tobi' == el.children[0].textContent);
   });
 
   it('should set text values as array elements', function(){
-    var el = Oz('<div oz-each="names"><p oz-text="@"></p></div>', { names: ['Tobi', 'Paul']});
+    var el = Oz.render('<div oz-each="names"><p oz-text="@"></p></div>', { names: ['Tobi', 'Paul']});
     assert('Tobi' == el[0].children[0].textContent);
     assert('Paul' == el[1].children[0].textContent);
   });
 
   it('should hide elements that have falsey values', function(){
-    var el = Oz('<div oz-if="bool"></div>', { bool: false });
+    var el = Oz.render('<div oz-if="bool"></div>', { bool: false });
     assert(el[0].style.display === 'none');
   });
 
   it('should not change context for bool values', function(){
-    var el = Oz('<div oz-if="bool"><p oz-text="name"></p></div>', { name: 'Tobi', bool: true });
+    var el = Oz.render('<div oz-if="bool"><p oz-text="name"></p></div>', { name: 'Tobi', bool: true });
     assert('Tobi' == el[0].children[0].textContent);
   });
 
   it('should allow access dot notation for value access', function(){
-    var el = Oz('<div oz-if="names.length"><p oz-text="text"></p></div>', { names: ['Tobi', 'Paul'], text: 'something'});
+    var el = Oz.render('<div oz-if="names.length"><p oz-text="text"></p></div>', { names: ['Tobi', 'Paul'], text: 'something'});
     assert('something' == el[0].children[0].textContent);
   });
 
   it('should set attributes without changing context', function(){
-    var el = Oz('<div oz-attr="class:name"><p oz-text="text"></p></div>', { name: 'Tobi', text: 'something'});
+    var el = Oz.render('<div oz-attr="class:name"><p oz-text="text"></p></div>', { name: 'Tobi', text: 'something'});
     assert('Tobi' == el[0].className);
     assert('something' == el[0].children[0].textContent);
   });
 
   it('should render multiple top level elements', function(){
-    var el = Oz('<p oz-text="name"></p><p oz-text="text"></p>', { name: 'Tobi', text: 'something'});
+    var el = Oz.render('<p oz-text="name"></p><p oz-text="text"></p>', { name: 'Tobi', text: 'something'});
     assert('Tobi' == el[0].textContent);
     assert('something' == el[1].textContent);
   });

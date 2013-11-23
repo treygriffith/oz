@@ -22,16 +22,14 @@ module.exports = Oz;
  * Template constructor
  */
 
-function Oz(template, ctx) {
-  if(!(this instanceof Oz)) return new Oz(template, ctx);
+function Oz(template) {
+  if(!(this instanceof Oz)) return new Oz(template);
   this.thisSymbol = '@';
   this.separator = ':';
   this.template = domify(template);
   this.tags = clone(Oz.tags);
   this.cached = [];
   this.rendered = [];
-
-  if(ctx) return this.render(ctx);
 }
 
 /**
@@ -101,6 +99,14 @@ Oz.prototype._render = function (template, ctx, ignoreCache) {
   this.cache.push(unwrap(tmp));
 
   return this.cache[this.cache.length - 1];
+};
+
+/**
+ * Convenience function
+ */
+
+Oz.render = function (template, ctx) {
+  return (new Oz(template)).render(ctx);
 };
 
 /**
