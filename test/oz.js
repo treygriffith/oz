@@ -5,63 +5,68 @@ var assert = require('assert');
 
 describe('Rendering', function(){
   it('should set text values', function(){
-    var el = Oz.render('<div><p oz-text="name"></p></div>', { name: 'Tobi' })[0];
+    var el = Oz.render('<div><p oz-text="name"></p></div>', { name: 'Tobi' }).children[0];
     assert('Tobi' == el.children[0].textContent);
   });
 
   it('should set text values in the context of objects', function(){
-    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: { name: 'Tobi' }, name: 'John' })[0];
+    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: { name: 'Tobi' }, name: 'John' }).children[0];
     assert('Tobi' == el.children[0].textContent);
   });
 
   it('should set text values as array elements', function(){
-    var el = Oz.render('<div oz-each="names"><p oz-text="@"></p></div>', { names: ['Tobi', 'Paul']});
+    var el = Oz.render('<div oz-each="names"><p oz-text="@"></p></div>', { names: ['Tobi', 'Paul']}).children;
     assert('Tobi' == el[0].children[0].textContent);
     assert('Paul' == el[1].children[0].textContent);
   });
 
   it('should use object values as array elements', function(){
-    var el = Oz.render('<div oz-each="people"><p oz-text="name"></p></div>', { people: [ {name: 'Tobi'}, {name: 'Paul'} ]});
+    var el = Oz.render('<div oz-each="people"><p oz-text="name"></p></div>', { people: [ {name: 'Tobi'}, {name: 'Paul'} ]}).children;
     assert('Tobi' == el[0].children[0].textContent);
     assert('Paul' == el[1].children[0].textContent);
   });
 
   it('should hide elements that have falsey values', function(){
-    var el = Oz.render('<div oz-if="bool"></div>', { bool: false });
+    var el = Oz.render('<div oz-if="bool"></div>', { bool: false }).children;
     assert(el[0].style.display === 'none');
   });
 
   it('should not change context for bool values', function(){
-    var el = Oz.render('<div oz-if="bool"><p oz-text="name"></p></div>', { name: 'Tobi', bool: true });
+    var el = Oz.render('<div oz-if="bool"><p oz-text="name"></p></div>', { name: 'Tobi', bool: true }).children;
     assert('Tobi' == el[0].children[0].textContent);
   });
 
   it('should allow access dot notation for value access', function(){
-    var el = Oz.render('<div oz-if="names.length"><p oz-text="text"></p></div>', { names: ['Tobi', 'Paul'], text: 'something'});
+    var el = Oz.render('<div oz-if="names.length"><p oz-text="text"></p></div>', { names: ['Tobi', 'Paul'], text: 'something'}).children;
     assert('something' == el[0].children[0].textContent);
   });
 
   it('should set attributes without changing context', function(){
-    var el = Oz.render('<div oz-attr="class:name"><p oz-text="text"></p></div>', { name: 'Tobi', text: 'something'});
+    var el = Oz.render('<div oz-attr="class:name"><p oz-text="text"></p></div>', { name: 'Tobi', text: 'something'}).children;
     assert('Tobi' == el[0].className);
     assert('something' == el[0].children[0].textContent);
   });
 
   it('should render multiple attributes in one tag', function(){
-    var el = Oz.render('<div oz-attr="class:name;data-active:active"></div>', { name: 'Tobi', active: true}); 
+    var el = Oz.render('<div oz-attr="class:name;data-active:active"></div>', { name: 'Tobi', active: true}).children; 
     assert('Tobi' == el[0].className);
     assert('true' == el[0].getAttribute('data-active'));
   });
 
   it('should render multiple top level elements', function(){
-    var el = Oz.render('<p oz-text="name"></p><p oz-text="text"></p>', { name: 'Tobi', text: 'something'});
+    var el = Oz.render('<p oz-text="name"></p><p oz-text="text"></p>', { name: 'Tobi', text: 'something'}).children;
     assert('Tobi' == el[0].textContent);
     assert('something' == el[1].textContent);
   });
 
   it('should call functions to get values', function(){
-    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: function () { return { name: 'Tobi' }; }});
+    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: function () { return { name: 'Tobi' }; }}).children;
     assert('Tobi' == el[0].children[0].textContent);
+  });
+
+  it('should render form values', function(){
+    var el = Oz.render('<div oz="person"><input type="text" oz-val="name" /></div>', { person: { name: 'Tobi' } }).children[0];
+    assert('Tobi' == el.children[0].value);
   });
 });
 
@@ -69,8 +74,8 @@ describe("Updating", function() {
   it('should keep the same dom node when updating', function(){
     var template = Oz('<div></div>');
 
-    var el = template.render({})[0];
-    var el2 = template.update({})[0];
+    var el = template.render({}).children[0];
+    var el2 = template.update({}).children[0];
 
     assert(el === el2);
   });
@@ -78,7 +83,7 @@ describe("Updating", function() {
   it('should update text values', function(){
 
     var template = Oz('<div><p oz-text="name"></p></div>');
-    var el = template.render({ name: 'Tobi' })[0];
+    var el = template.render({ name: 'Tobi' }).children[0];
 
     assert('Tobi' == el.children[0].textContent);
 
@@ -90,7 +95,7 @@ describe("Updating", function() {
   it('should update text of a nested value', function(){
 
     var template = Oz('<div oz="person"><p oz-text="name"></p></div>');
-    var el = template.render({ person: { name: 'Tobi' } })[0];
+    var el = template.render({ person: { name: 'Tobi' } }).children[0];
 
     assert('Tobi' == el.children[0].textContent);
 
@@ -100,17 +105,13 @@ describe("Updating", function() {
   });
 
   it('should update text values as array elements', function(){
-    console.log("Starting text array tests");
 
     var template = Oz('<div oz-each="names"><p oz-text="@"></p></div>');
-    var el = template.render({ names: ['Tobi', 'Paul']});
+    var el = template.render({ names: ['Tobi', 'Paul']}).children;
     assert('Tobi' == el[0].children[0].textContent);
     assert('Paul' == el[1].children[0].textContent);
 
     template.update({names: ['Tobi', 'Brian']});
-
-    console.log(el[0]);
-    console.log(el[1]);
 
     assert('Tobi' == el[0].children[0].textContent);
     assert('Brian' == el[1].children[0].textContent);
@@ -118,7 +119,7 @@ describe("Updating", function() {
 
   it('should add new array elements', function(){
     var template = Oz('<div oz-each="names"><p oz-text="@"></p></div>');
-    var el = template.render({ names: ['Tobi', 'Paul']});
+    var el = template.render({ names: ['Tobi', 'Paul']}).children;
 
     template.update({names: ['Tobi', 'Paul', 'Brian']});
 
@@ -127,16 +128,17 @@ describe("Updating", function() {
 
   it('should remove deleted array elements', function(){
     var template = Oz('<div oz-each="names"><p oz-text="@"></p></div>');
-    var el = template.render({ names: ['Tobi', 'Paul', 'Brian']});
+    var el = template.render({ names: ['Tobi', 'Paul', 'Brian']}).children;
 
     template.update({names: ['Tobi', 'Paul']});
 
-    assert(el[2] == null);
+    assert(el[3] == null);
+    assert(el[2].children[0].textContent === '');
   });
 
   it('should show elements that have truthy values', function(){
     var template = Oz('<div oz-if="bool"></div>');
-    var el = template.render({ bool: false });
+    var el = template.render({ bool: false }).children;
     assert(el[0].style.display === 'none');
 
     template.update({bool: true});
@@ -145,13 +147,34 @@ describe("Updating", function() {
 
   it('should update multiple attributes in one tag', function(){
     var template = Oz('<div oz-attr="class:name;data-active:active"></div>');
-    var el = template.render({ name: 'Tobi', active: true});
+    var el = template.render({ name: 'Tobi', active: true}).children;
     assert('Tobi' == el[0].className);
     assert('true' == el[0].getAttribute('data-active'));
 
     template.update({ name: 'Paul', active: false});
     assert('Paul' == el[0].className);
     assert('false' == el[0].getAttribute('data-active'));
+  });
+
+  it('should update form values', function(){
+
+    var template = Oz('<div oz="person"><input type="text" oz-val="name" /></div>');
+    var el = template.render({ person: { name: 'Tobi' } }).children[0];
+    assert('Tobi' == el.children[0].value);
+
+    template.update({ person: { name: 'Brian' } });
+
+    assert('Brian' == el.children[0].value);
+  });
+});
+
+describe("Events", function(){
+  it('should send a change event when a form value is updated', function(){
+
+  });
+
+  it('should emit events based on DOM events', function(){
+
   });
 });
 
