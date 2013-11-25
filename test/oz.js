@@ -174,7 +174,45 @@ describe("Events", function(){
   });
 
   it('should emit events based on DOM events', function(){
+    var template = Oz('<div oz-evt="click:save"></div>');
+    var el = template.render().children[0];
 
+    template.on('save', function (_el) {
+      assert(_el === el);
+    });
+
+    // simulate event
+    // el.click();
+    
+  });
+
+  it('should pass the current context to the event handler', function(){
+    var template = Oz('<div oz-evt="click:save" oz="person"></div>');
+    var person = { name: 'Tobi' };
+    var el = template.render({person: person}).children[0];
+
+    template.on('save', function (_el, e, ctx) {
+      assert(ctx === person);
+    });
+
+    // simulate event
+    // el.click();
+  });
+
+  it('should only execute one event, even after re-rendering', function(){
+    var template = Oz('<div oz-evt="click:save"></div>');
+    var el = template.render().children[0];
+    template.update();
+
+    var count = 0;
+
+    template.on('save', function () {
+      count++;
+      assert(count === 1);
+    });
+
+    // simulate event
+    // el.click();
   });
 });
 
