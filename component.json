@@ -6,17 +6,22 @@
     "component/clone": "*",
     "component/matches-selector": "*",
     "component/css": "*",
+    "component/event": "*",
+    "component/emitter": "*",
     "ramitos/children": "*",
+    "ramitos/siblings": "*",
     "treygriffith/find-with-self": "*",
     "matthewp/attr": "*",
-    "matthewp/text": "*"
+    "matthewp/text": "*",
+    "component/value": "*"
   },
   "development": {
-    "component/assert": "*",
-    "component/emitter": "*"
+    "component/assert": "*"
   },
   "scripts": [
-    "index.js"
+    "index.js",
+    "lib/oz.js",
+    "lib/tags.js"
   ],
   "main": "index.js"
 }
