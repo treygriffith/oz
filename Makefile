@@ -4,7 +4,11 @@ build: components $(SRC)
 				@component build --dev
 
 oz: components
-				@component build --standalone oz --name oz --out .
+				@component build --standalone oz --name oz --out dist
+				@uglifyjs dist/oz.js -o dist/oz.min.js_
+				@cp dist/oz.min.js_ dist/oz.min.js
+				@gzip dist/oz.min.js
+				@mv dist/oz.min.js_ dist/oz.min.js
 
 components: component.json
 				@component install --dev
