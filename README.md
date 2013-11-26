@@ -291,4 +291,4 @@ The default tags included with Oz are intended to take care of most templating u
   * `scope` - string representation of the current scope tree
   * `next` - function to be called when rendering is completed
 
-See the source for more information, as all the default tags are defined this way in [lib/tags.js](blob/master/lib/tags.js).
+See the source for more information, as all the default tags are defined this way in [lib/tags.js](lib/tags.js).
