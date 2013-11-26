@@ -13,10 +13,12 @@ It is built on a philosophy of:
 Installation
 ------------
 Using [component](http://github.com/component):
+
     $ component install treygriffith/events
 
 As a standalone (using the scripts in `dist/`):
-    `<script src="oz.js"></script>`
+
+    <script src="oz.js"></script>
 
 
 Usage
