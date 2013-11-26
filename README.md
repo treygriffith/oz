@@ -154,7 +154,7 @@ The neat parts of Oz are in the tags that you add as HTML attributes. You can ve
 
     Notation: `<input oz-val="name">`
 
-    Usage: Bind a form element's value to a template property. See [Two-way Bindings] for information on how to update the data model with data from the template.
+    Usage: Bind a form element's value to a template property. See [Two-way Bindings](#two-way-bindings) for information on how to update the data model with data from the template.
 
     Example: 
 
@@ -171,7 +171,7 @@ The neat parts of Oz are in the tags that you add as HTML attributes. You can ve
 
     Notation: `<button oz-evt="click:save">Save</button>`
 
-    Usage: Trigger an event on the template when an event occurs in the DOM. See [Events] for more information.
+    Usage: Trigger an event on the template when an event occurs in the DOM. See [Events](#events) for more information.
 
     Example:
 
@@ -289,4 +289,4 @@ The default tags included with Oz are intended to take care of most templating u
   * `scope` - string representation of the current scope tree
   * `next` - function to be called when rendering is completed
 
-See the source for more information, as all the default tags are defined this way in /lib/tags.js.
+See the source for more information, as all the default tags are defined this way in [lib/tags.js](blob/master/lib/tags.js).
