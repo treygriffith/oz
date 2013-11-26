@@ -52,7 +52,7 @@ The neat parts of Oz are in the tags that you add as HTML attributes. You can ve
 
     Notation: `<div oz="person"></div>`
 
-    Usage: All child nodes will have the context available within the person property
+    Usage: All child nodes will be rendered within the context of `person`
 
     Example:
 
@@ -87,10 +87,10 @@ The neat parts of Oz are in the tags that you add as HTML attributes. You can ve
       ```
 
       ```html
-      <div oz-each="people">
+      <div oz-each="people" oz-each-index="0">
         <span oz-text="@">Tobi</span>
       </div>
-      <div oz-each="people">
+      <div oz-each="people" oz-each-index="1">
         <span oz-text="@">Brian</span>
       </div>
       ```
@@ -259,3 +259,34 @@ personTemplate.on('change', function (attr, val) {
 // render the initial template
 document.body.appendChild(personTemplate.render(person.attributes));
 ```
+
+### Getters
+When a property being rendered is a function, Oz calls that function. In that way, there is not really a concept of a "getter" in Oz so much as a function that defines a property. This pattern makes it easier to include different displays of data without mangling your templates. For example, in a previous example I templated a `firstName` and `lastName` property separately. I could have just as easily defined a `fullName` function property like so:
+
+```javascript
+var person = {
+  firstName: "Trey",
+  lastName: "Griffith",
+  fullName: function () {
+    return this.firstName + " " + this.lastName
+  }
+};
+
+var personTemplate = Oz('<span oz-text="fullName"></span>');
+
+personTemplate.render(person); // outputs <span oz-text="fullName">Trey Griffith</span>
+```
+
+
+## Extending Oz
+The default tags included with Oz are intended to take care of most templating use cases. However, to allow for additional uses, and for more efficient or feature-rich versions of existing tags, Oz is designed to allow additional tags to be added as first-class citizens. To add a tag, simply add a new property to the `Oz.tags` object with the following properties:
+
+* `attr` - the attribute to be used in the DOM (e.g. `oz-text`)
+* `render` - function responsible for modifying the node. It should accept 5 arguments:
+  * `el` - DOM Node being rendered
+  * `ctx` - the current context
+  * `prop` - the value in the HTML attribute
+  * `scope` - string representation of the current scope tree
+  * `next` - function to be called when rendering is completed
+
+See the source for more information, as all the default tags are defined this way in /lib/tags.js.
