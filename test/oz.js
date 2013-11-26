@@ -27,6 +27,11 @@ describe('Rendering', function(){
     assert('Paul' == el[1].children[0].textContent);
   });
 
+  it('should hide non-array-like objects that are `each`ed', function(){
+    var el = Oz.render('<div oz-each="people"><p oz-text="name"></p></div>', {}).children;
+    assert(el[0].style.display === 'none');
+  });
+
   it('should hide elements that have falsey values', function(){
     var el = Oz.render('<div oz-if="bool"></div>', { bool: false }).children;
     assert(el[0].style.display === 'none');
