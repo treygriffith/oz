@@ -86,7 +86,7 @@ describe("Updating", function() {
     var template = Oz('<div></div>');
 
     var el = template.render({}).children[0];
-    var el2 = template.update({}).children[0];
+    var el2 = template.update({})[0];
 
     assert(el === el2);
   });
@@ -172,6 +172,19 @@ describe("Updating", function() {
     var template = Oz('<div oz="person"><input type="text" oz-val="name" /></div>');
     var el = template.render({ person: { name: 'Tobi' } }).children[0];
     assert('Tobi' == el.children[0].value);
+
+    template.update({ person: { name: 'Brian' } });
+
+    assert('Brian' == el.children[0].value);
+  });
+
+  it('should update elements after attaching to the DOM', function(){
+    var template = Oz('<div oz="person"><input type="text" oz-val="name" /></div>');
+    var fragment = template.render({ person: { name: 'Tobi' } });
+    var el = fragment.children[0];
+    assert('Tobi' == el.children[0].value);
+
+    document.body.appendChild(fragment);
 
     template.update({ person: { name: 'Brian' } });
 
