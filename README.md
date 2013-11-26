@@ -3,11 +3,11 @@ Oz.js
 Oz.js is a lightweight, simple, declarative templating method with built-in events, two-way bindings, and efficient rendering.
 
 It is built on a philosophy of:
-1) taking advantage of the DOM instead of string manipulation
-2) making the minimum amount of DOM changes as possible to increase rendering speed
-3) not adding template-specific DOM nodes to the DOM tree
-4) being completely agnostic to any other part of the application (i.e. modeling, routing, etc)
-5) letting the application never touch the DOM
+1. taking advantage of the DOM instead of string manipulation
+2. making the minimum amount of DOM changes as possible to increase rendering speed
+3. not adding template-specific DOM nodes to the DOM tree
+4. being completely agnostic to any other part of the application (i.e. modeling, routing, etc)
+5. letting the application never touch the DOM
 
 Installation
 ------------
@@ -52,7 +52,7 @@ The neat parts of Oz are in the tags that you add as HTML attributes. You can ve
     Usage: All child nodes will have the context available within the person property
 
     Example:
-    
+
       ```javascript
       var context = {
         person: {
