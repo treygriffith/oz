@@ -2,6 +2,7 @@
 var Oz = require('oz');
 var Emitter = require('emitter');
 var assert = require('assert');
+var trigger = require('trigger-event');
 
 describe('Rendering', function(){
   it('should set text values', function(){
@@ -173,34 +174,36 @@ describe("Events", function(){
 
   });
 
-  it('should emit events based on DOM events', function(){
+  it('should emit events based on DOM events', function(next){
     var template = Oz('<div oz-evt="click:save"></div>');
     var el = template.render().children[0];
 
     template.on('save', function (_el) {
       assert(_el === el);
+      next();
     });
 
     // simulate event
-    // el.click();
+    trigger(el, 'click');
     
   });
 
-  it('should pass the current context to the event handler', function(){
-    var template = Oz('<div oz-evt="click:save" oz="person"></div>');
+  it('should pass the current context to the event handler', function(next){
+    var template = Oz('<div oz-evt="click:save"></div>');
     var person = { name: 'Tobi' };
-    var el = template.render({person: person}).children[0];
+    var el = template.render(person).children[0];
 
     template.on('save', function (_el, e, ctx) {
       assert(ctx === person);
+      next();
     });
 
     // simulate event
-    // el.click();
+    trigger(el, 'click');
   });
 
-  it('should only execute one event, even after re-rendering', function(){
-    var template = Oz('<div oz-evt="click:save"></div>');
+  it('should only execute one event, even after re-rendering', function(next){
+    var template = Oz('<div oz-evt="click:save;dblclick:delete"></div>');
     var el = template.render().children[0];
     template.update();
 
@@ -208,11 +211,17 @@ describe("Events", function(){
 
     template.on('save', function () {
       count++;
+      console.log("save called");
       assert(count === 1);
     });
 
+    template.on('delete', function(){
+      next();
+    });
+
     // simulate event
-    // el.click();
+    trigger(el, 'click');
+    trigger(el, 'delete');
   });
 });
 

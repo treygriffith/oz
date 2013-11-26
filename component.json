@@ -16,7 +16,8 @@
     "component/value": "*"
   },
   "development": {
-    "component/assert": "*"
+    "component/assert": "*",
+    "adamsanderson/trigger-event": "*"
   },
   "scripts": [
     "index.js",
