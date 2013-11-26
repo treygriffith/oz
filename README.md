@@ -1,6 +1,6 @@
 Oz.js
 =====
-Oz.js is a lightweight, simple, declarative templating method with built-in events, two-way bindings, and efficient rendering.
+Oz.js is a lightweight (6KB uglified and gzipped with all dependencies), simple, declarative templating method with built-in events, two-way bindings, and efficient rendering.
 
 It is built on a philosophy of:
 
@@ -28,7 +28,7 @@ Usage
 To create a template, simply call the `Oz` constructor function on a string of HTML text or directly on a DOM node (it will be cloned for rendering)
 
 ```javascript
-var template = Oz("<div></div>");
+var template = Oz('<div></div>');
 ```
 
 ### Rendering a template
@@ -42,7 +42,7 @@ document.body.appendChild(fragment);
 There is also a convenience method attached to the Oz constructor to build and render the template in a single call:
 
 ```javascript
-Oz.render("<div></div>");
+Oz.render('<div></div>');
 ```
 
 ### Oz Tags
@@ -200,7 +200,7 @@ var person = new Backbone.Model({
   lastName: "Ashkenas"
 });
 
-var personTemplate = Oz('<span oz-text="firstName"></span><span oz-text="lastName"></span>'');
+var personTemplate = Oz('<span oz-text="firstName"></span><span oz-text="lastName"></span>');
 
 // register our change listener
 person.on('change', function (model) {
