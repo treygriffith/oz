@@ -1,6 +1,6 @@
 Oz.js
 =====
-Oz.js is a lightweight (6KB uglified and gzipped with all dependencies), simple, declarative templating method with built-in events, two-way bindings, and efficient rendering.
+Oz.js is a lightweight*, simple, declarative templating method with built-in events, two-way bindings, and efficient rendering.
 
 It is built on a philosophy of:
 
@@ -9,6 +9,8 @@ It is built on a philosophy of:
 3. not adding template-specific DOM nodes to the DOM tree
 4. being completely agnostic to any other part of the application (i.e. modeling, routing, etc)
 5. letting the application never touch the DOM
+
+* Oz.js is 24 KB when uglified, and 6 KB gzipped, including all dependencies.
 
 Installation
 ------------
