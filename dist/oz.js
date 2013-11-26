@@ -1666,5 +1666,5 @@ require.alias("oz/index.js", "oz/index.js");if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("oz"); });
 } else {
-  this["oz"] = require("oz");
+  this["Oz"] = require("oz");
 }})();

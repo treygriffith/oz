@@ -1,5 +1,7 @@
 {
   "name": "oz",
+  "version": "0.0.1",
+  "description": "Simple, extensible, declarative two-way binding templates",
   "dependencies": {
     "component/domify":"*",
     "treygriffith/closest": "*",
