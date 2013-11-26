@@ -42,6 +42,11 @@ describe('Rendering', function(){
     assert('something' == el[0].children[0].textContent);
   });
 
+  it('should not choke on undefined objects', function () {
+    var el = Oz.render('<div oz-if="names.length"></div>', {}).children[0];
+    assert(el.style.display === 'none');
+  })
+
   it('should set attributes without changing context', function(){
     var el = Oz.render('<div oz-attr="class:name"><p oz-text="text"></p></div>', { name: 'Tobi', text: 'something'}).children;
     assert('Tobi' == el[0].className);
