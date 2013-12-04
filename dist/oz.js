@@ -509,22 +509,7 @@ module.exports = function(el, obj){
 };
 
 });
-require.register("component-indexof/index.js", function(exports, require, module){
-module.exports = function(arr, obj){
-  if (arr.indexOf) return arr.indexOf(obj);
-  for (var i = 0; i < arr.length; ++i) {
-    if (arr[i] === obj) return i;
-  }
-  return -1;
-};
-});
 require.register("component-emitter/index.js", function(exports, require, module){
-
-/**
- * Module dependencies.
- */
-
-var index = require('indexof');
 
 /**
  * Expose `Emitter`.
@@ -593,7 +578,7 @@ Emitter.prototype.once = function(event, fn){
     fn.apply(this, arguments);
   }
 
-  fn._off = on;
+  on.fn = fn;
   this.on(event, on);
   return this;
 };
@@ -631,8 +616,14 @@ Emitter.prototype.removeEventListener = function(event, fn){
   }
 
   // remove specific handler
-  var i = index(callbacks, fn._off || fn);
-  if (~i) callbacks.splice(i, 1);
+  var cb;
+  for (var i = 0; i < callbacks.length; i++) {
+    cb = callbacks[i];
+    if (cb === fn || cb.fn === fn) {
+      callbacks.splice(i, 1);
+      break;
+    }
+  }
   return this;
 };
 
@@ -686,9 +677,9 @@ Emitter.prototype.hasListeners = function(event){
 
 });
 require.register("component-event/index.js", function(exports, require, module){
-var bind = (window.addEventListener !== undefined) ? 'addEventListener' : 'attachEvent',
-    unbind = (window.removeEventListener !== undefined) ? 'removeEventListener' : 'detachEvent',
-    prefix = (bind !== 'addEventListener') ? 'on' : '';
+var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
+    unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
+    prefix = bind !== 'addEventListener' ? 'on' : '';
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -1076,6 +1067,7 @@ var Emitter = require('emitter')
   , clone = require('clone')
   , findWithSelf = require('find-with-self')
   , attr = require('attr')
+  , utils = require('./utils')
   , tags = require('./tags');
 
 /**
@@ -1112,7 +1104,6 @@ function Oz(template) {
   this.tags = clone(Oz.tags);
   this.events = new Events();
   this.cached = [];
-  this.rendered = [];
 }
 
 Emitter(Oz.prototype);
@@ -1125,30 +1116,36 @@ Emitter(Oz.prototype);
  */
 Oz.prototype.render = function (ctx) {
   var self = this
-    , template = this.template.cloneNode(true);
+    , template = this.template.cloneNode(true)
+    , fragment;
 
   if(isFragment(template)) {
-    this.rendered = template;
+    fragment = template;
   } else {
-    this.rendered = document.createDocumentFragment();
-    this.rendered.appendChild(template);
+    fragment = document.createDocumentFragment();
+    fragment.appendChild(template);
   }
 
-  return this.update(ctx);
+  this.rendered = children(fragment);
+
+  this.update(ctx);
+
+  return fragment;
 };
 
 /**
  * Update template
  * @api public
  * @param  {Object} ctx Context in which to render the template
- * @return {Array}     Document fragment corresponding to the updated (in-place) template
+ * @return {Array}     Array of rendered elements corresponding to the updated (in-place) template
  */
 Oz.prototype.update = function (ctx) {
   var self = this;
 
+  this.ctx = {};
   this.cache = [];
 
-  children(this.rendered).forEach(function (el) {
+  this.rendered.forEach(function (el) {
     unbindAll(self.events, el);
     self._render(el, ctx);
   });
@@ -1161,9 +1158,16 @@ Oz.prototype.update = function (ctx) {
  * @api private
  */
 Oz.prototype._change = function (scope, val) {
-  this.emit('change:'+scope, val);
-  this.emit('change:'+scope.split('.')[0]);
-  this.emit('change', scope, val);
+  var split;
+
+  this.emit('change:'+scope, val); // triggers .on('change:person.name')
+
+  if(~scope.indexOf('.')) {
+    split = scope.split('.');
+    this.emit('change:'+split[0]); // triggers .on('change:person')
+  }
+
+  this.emit('change', scope, val); // triggers .on('change')
 };
 
 /**
@@ -1182,7 +1186,6 @@ Oz.prototype._render = function (template, ctx, scope, ignoreCache) {
     , tagKeys = Object.keys(tags)
     , tmp;
 
-  ctx = ctx || {};
   scope = scope || '';
 
   if(~this.cache.indexOf(template) && !ignoreCache) {
@@ -1197,18 +1200,20 @@ Oz.prototype._render = function (template, ctx, scope, ignoreCache) {
     findWithSelf(template, selector).filter(filterRoot(tags, template)).forEach(function (el) {
       var prop = attr(el).get(tags[key].attr)
         , next = function (_el, _ctx, _scope) {
-            _el = _el || el;
-            _ctx = _ctx || ctx;
-            _scope = _scope || scope;
+          // replace empty arguments with defaults
+          switch(arguments.length) {
+            case 0:
+              _el = el;
+            case 1:
+              _ctx = ctx;
+            case 2:
+              _scope = scope;
+          }
 
           // render this element's children
           children(_el).forEach(function (child) {
-            // context change
-            if(_scope !== scope && _ctx !== ctx) {
-              self._render(child, _ctx, _scope, true);
-            } else {
-              self._render(child, ctx, scope);
-            }
+            // ignore cache on context change
+            self._render(child, _ctx, _scope, (_scope !== scope && _ctx !== ctx));
           });
         };
 
@@ -1238,6 +1243,10 @@ Oz.render = function (template, ctx) {
  */
 Oz.tags = tags;
 
+/**
+ * Utilities for extended tags to use
+ */
+for(var p in utils) Oz[p] = utils[p];
 
 
 /**
@@ -1301,7 +1310,8 @@ var attr = require('attr')
   , css = require('css')
   , matches = require('matches-selector')
   , children = require('children')
-  , siblings = require('siblings');
+  , siblings = require('siblings')
+  , utils = require('./utils');
 
 /**
  * Default template options
@@ -1334,8 +1344,8 @@ var tags = module.exports = {
 
       var self = this;
 
-      propSplit(prop, this.separator, this.equals, function (name, val) {
-        val = val != null ? get(ctx, val, self.thisSymbol) : null;
+      utils.propSplit(prop, this.separator, this.equals, function (name, val) {
+        val = val != null ? utils.get(ctx, val, self.thisSymbol) : null;
 
         if(attr(el).get(name) !== val) attr(el).set(name, val);
       });
@@ -1353,10 +1363,10 @@ var tags = module.exports = {
   object: {
     attr: 'oz',
     render: function (el, ctx, prop, scope, next) {
-      var val = get(ctx, prop, this.thisSymbol)
+      var val = utils.get(ctx, prop, this.thisSymbol)
         , self = this;
 
-      scope = getScope(scope, prop, this.thisSymbol)
+      scope = utils.getScope(scope, prop, this.thisSymbol)
 
       show(el);
       if(!val) hide(el);
@@ -1374,7 +1384,7 @@ var tags = module.exports = {
   bool: {
     attr: 'oz-if',
     render: function (el, ctx, prop, scope, next) {
-      var val = get(ctx, prop, this.thisSymbol)
+      var val = utils.get(ctx, prop, this.thisSymbol)
         , self = this;
 
       show(el);
@@ -1398,8 +1408,11 @@ var tags = module.exports = {
       var newEl
         , existing = {}
         , after
-        , val = get(ctx, prop, this.thisSymbol)
+        , val = utils.get(ctx, prop, this.thisSymbol)
         , self = this;
+
+      // nothing to do if there is no array at all
+      if(!val) return hide(el);
 
       show(el);
 
@@ -1424,7 +1437,7 @@ var tags = module.exports = {
         // insert in the correct ordering
         after.parentNode.insertBefore(newEl, after);
 
-        next(newEl, val[i], getScope(scope, prop + '.' + i, self.thisSymbol));
+        next(newEl, val[i], utils.getScope(scope, prop + '.' + i, self.thisSymbol));
       }
 
       // hide template element
@@ -1441,7 +1454,7 @@ var tags = module.exports = {
   string: {
     attr: 'oz-text',
     render: function (el, ctx, prop, scope, next) {
-      var val = get(ctx, prop, this.thisSymbol)
+      var val = utils.get(ctx, prop, this.thisSymbol) || ''
         , self = this;
 
       text(el, String(val));
@@ -1461,7 +1474,7 @@ var tags = module.exports = {
   value: {
     attr: 'oz-val',
     render: function (el, ctx, prop, scope, next) {
-      var val = get(ctx, prop, this.thisSymbol)
+      var val = utils.get(ctx, prop, this.thisSymbol)
         , self = this;
 
       // set form value
@@ -1469,7 +1482,7 @@ var tags = module.exports = {
 
       // listen for changes to values
       onChange(self.events, el, function (val) {
-        self._change(getScope(scope, prop, self.thisSymbol), val);
+        self._change(utils.getScope(scope, prop, self.thisSymbol), val);
       });
 
       next();
@@ -1486,9 +1499,8 @@ var tags = module.exports = {
     render: function (el, ctx, prop, scope, next) {
       var self = this;
 
-      propSplit(prop, this.separator, this.equals, function (name, val) {
+      utils.propSplit(prop, this.separator, this.equals, function (name, val) {
 
-        // TODO: unbind old events when re-rendered - but only for this particular listener
         self.events.bind(el, name, function (e) {
           self.emit(val, el, e, ctx);
         });
@@ -1505,43 +1517,6 @@ var tags = module.exports = {
  * Utility functions
  */
 
-// get the value of a property in a context
-function get(ctx, prop, thisSymbol) {
-  var val = ctx;
-
-  prop.split('.').forEach(function (part) {
-    if(part !== thisSymbol) {
-      if(typeof val[part] === 'function') val = val[part]();
-      else val = val[part];
-    }
-  });
-
-  return val;
-}
-
-// get the textual representation of current scope
-function getScope(scope, prop, thisSymbol) {
-
-  var scopes = [];
-
-  prop.split('.').forEach(function (part) {
-    if(part !== thisSymbol) scopes.push(part);
-  });
-
-  return scopes.join('.');
-}
-
-// split a property into its constituent parts - similar to inline style declarations
-function propSplit(prop, separator, equals, fn) {
-  prop.split(separator).forEach(function (prop) {
-    if(!prop) return;
-
-    var parts = prop.split(equals).map(trim);
-
-    fn(parts[0], parts[1]);
-  });
-}
-
 // hide element
 function hide(el) {
   css(el, {
@@ -1554,11 +1529,6 @@ function show(el) {
   css(el, {
     display: ''
   });
-}
-
-// convenience trim function
-function trim(str) {
-  return str.trim();
 }
 
 // bind an element to all potential `change` events, but only trigger when content changes
@@ -1574,6 +1544,50 @@ function onChange(events, el, fn) {
   events.bind(el, 'click', changed);
   events.bind(el, 'change', changed);
   events.bind(el, 'keyup', changed);
+}
+});
+require.register("oz/lib/utils.js", function(exports, require, module){
+// get the value of a property in a context
+exports.get = function get(ctx, prop, thisSymbol) {
+  var val = ctx;
+
+  prop.split('.').forEach(function (part) {
+    if(part !== thisSymbol) {
+      if(!val) return val = null;
+      if(typeof val[part] === 'function') val = val[part]();
+      else val = val[part];
+    }
+  });
+
+  return val;
+};
+
+// get the textual representation of current scope
+exports.getScope = function getScope(scope, prop, thisSymbol) {
+
+  var scopes = [];
+
+  prop.split('.').forEach(function (part) {
+    if(part !== thisSymbol) scopes.push(part);
+  });
+
+  return scopes.join('.');
+};
+
+// split a property into its constituent parts - similar to inline style declarations
+exports.propSplit = function propSplit(prop, separator, equals, fn) {
+  prop.split(separator).forEach(function (prop) {
+    if(!prop) return;
+
+    var parts = prop.split(equals).map(trim);
+
+    fn(parts[0], parts[1]);
+  });
+};
+
+// convenience trim function
+function trim(str) {
+  return str.trim();
 }
 });
 
@@ -1612,7 +1626,6 @@ require.alias("component-css/index.js", "css/index.js");
 
 require.alias("component-emitter/index.js", "oz/deps/emitter/index.js");
 require.alias("component-emitter/index.js", "emitter/index.js");
-require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
 
 require.alias("treygriffith-events/index.js", "oz/deps/events/index.js");
 require.alias("treygriffith-events/index.js", "oz/deps/events/index.js");

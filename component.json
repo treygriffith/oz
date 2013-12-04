@@ -24,7 +24,8 @@
   "scripts": [
     "index.js",
     "lib/oz.js",
-    "lib/tags.js"
+    "lib/tags.js",
+    "lib/utils.js"
   ],
   "main": "index.js"
 }
