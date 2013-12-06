@@ -184,6 +184,25 @@ describe("Updating", function() {
     assert('Brian' == el.children[0].value);
   });
 
+  it('should emit scoped form events', function (next) {
+    var template = Oz('<div oz="person"><input oz-val="name"></div>');
+
+    var el = template.render().children[0].children[0];
+
+    template.on('change:name', function () {
+      assert(false);
+    });
+
+    template.on('change:person.name', function () {
+      assert(true);
+      next();
+    });
+
+    el.value = 'Tobi';
+
+    trigger(el, 'change');
+  });
+
   it('should update elements after attaching to the DOM', function(){
     var template = Oz('<div oz="person"><input type="text" oz-val="name" /></div>');
     var fragment = template.render({ person: { name: 'Tobi' } });

@@ -241,7 +241,7 @@ document.body.appendChild(personTemplate.render(person.attributes));
 
 
 ### Two-way Bindings
-Oz exposes an internal method for tags to notify the template that an attribute has changed. This is just one case of an Oz event, and the Oz template notifies any listeners of the `chagne` event. This is used to bind models to changes in the template. The only default tag that uses this functionality is `oz-val`, but it could potentially be used by others.
+Oz has an internal method for tags to notify the template that an attribute has changed. This is one case of an Oz event, and the Oz template notifies any listeners of the `change` event, as it would for any other event. This is used to bind models to changes in the template. The only default tag that uses this functionality is `oz-val`, but it could potentially be used by others.
 
 Here again, Oz is totally agnostic to how you model your data, you simply have to listen for change events and set your data in whatever way it prefers. Using Backbone:
 
@@ -256,6 +256,11 @@ var personTemplate = Oz('<input oz-val="firstName"><br><input oz-val="lastName">
 // listen for changes to the template
 personTemplate.on('change', function (attr, val) {
   person.set(attr, val);
+});
+
+// make changes in our model be reflected in the template for true two-way binding
+person.on('change', function (model) {
+  personTemplate.update(model.attributes);
 });
 
 // render the initial template
