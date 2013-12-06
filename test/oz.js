@@ -37,6 +37,13 @@ describe('Rendering', function(){
     assert(el[0].children[0].textContent === '');
   });
 
+  it('should not display undefined as a text or form value', function(){
+    var els = Oz.render('<div oz-text="name"></div><input oz-val="name">', {}).children;
+
+    assert(els[0].textContent === '');
+    assert(els[1].value === '');
+  });
+
   it('should hide elements that have falsey values', function(){
     var el = Oz.render('<div oz-if="bool"></div>', { bool: false }).children;
     assert(el[0].style.display === 'none');
