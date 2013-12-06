@@ -34,7 +34,6 @@ describe('Rendering', function(){
 
   it('should pass through undefined values as contexts', function(){
     var el = Oz.render('<div oz-each="people"><p oz-text="@"></p></div>', {people: [undefined, true]}).children;
-    console.log(el[0]);
     assert(el[0].children[0].textContent === '');
   });
 
