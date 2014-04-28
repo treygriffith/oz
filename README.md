@@ -10,7 +10,7 @@ It is built on a philosophy of:
 4. being completely agnostic to any other part of the application (i.e. modeling, routing, etc)
 5. letting the application never touch the DOM
 
-† Oz.js is 29 KB when uglified, and 8 KB gzipped, including all dependencies.
+† Oz.js core is ~150 lines. When all dependencies are included, it is 29 KB minified, and 8 KB gzipped.
 
 Installation
 ------------
