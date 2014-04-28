@@ -16,11 +16,13 @@ Installation
 ------------
 Using [component](http://github.com/component):
 
-    $ component install treygriffith/events
+    $ component install treygriffith/oz
 
 As a standalone (using the scripts in `dist/`):
 
-    <script src="oz.js"></script>
+    <script src="oz.min.js"></script>
+
+To install Oz along with the commonly used tags, see [oz-bundle](http://github.com/treygriffith/oz-bundle).
 
 
 Usage
@@ -48,7 +50,7 @@ Oz.render('<div></div>');
 ```
 
 ### Oz Tags
-You define which actions the template should take using HTML attributes that are registered as Oz tags. While Oz core does not have any tags included, There is a bundle that includes the most common tags. See [Extending Oz](#extending-oz) for more information.
+You define which actions the template should take using HTML attributes that are registered as Oz tags. While Oz core does not have any tags included, There is a [bundle](http://github.com/treygriffith/oz-bundle) that includes the most common tags. See [Extending Oz](#extending-oz) for more information.
 
 Here's a quick example of what a tag looks like:
 
@@ -167,7 +169,7 @@ personTemplate.render(person); // outputs <span oz-text="fullName">Trey Griffith
 
 
 ## Extending Oz
-Oz does not include any tags in its core. There are however, a few tags that were developed for a baseline Oz use case. Those tags are:
+Oz does not include any tags in its core. There are however, a few tags that were developed for a baseline Oz use case, and are included in the [Oz Bundle](http://github.com/treygriffith/oz-bundle). Those tags are:
 
 * [oz-attr](http://github.com/treygriffith/oz-attr) Bind an attribute value to a property
 * [oz-each](http://github.com/treygriffith/oz-each) Render each element for each member of an Array
