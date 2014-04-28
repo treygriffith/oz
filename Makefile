@@ -17,6 +17,6 @@ clean:
 				rm -fr build components template.js dist
 
 test: build
-				open test/index.html
+				component-test phantom
 
 .PHONY: clean oz test
