@@ -27,7 +27,15 @@ describe('Rendering', function(){
   });
 
   it('should use @ to access the current context', function(){
+    var template = Oz('<div oz-this="@"></div>');
 
+    template.tag('oz-this', function (el, ctx, prop, scope, next) {
+      assert(ctx === this.get(ctx, prop));
+
+      next();
+    });
+
+    template.render({});
   });
 
   it('should pass through undefined values as contexts', function(){
