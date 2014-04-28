@@ -48,142 +48,23 @@ Oz.render('<div></div>');
 ```
 
 ### Oz Tags
-The neat parts of Oz are in the tags that you add as HTML attributes. You can very easily add your own tags, but Oz comes with tags that should satisfy most templating needs.
+You define which actions the template should take using HTML attributes that are registered as Oz tags. While Oz core does not have any tags included, There is a bundle that includes the most common tags. See [Extending Oz](#extending-oz) for more information.
 
-  * __Object__
+Here's a quick example of what a tag looks like:
 
-    Notation: `<div oz="person"></div>`
+```javascript
+var context = {
+  name: 'Tobi'
+};
 
-    Usage: All child nodes will be rendered within the context of `person`
+Oz.render('<span oz-text="name"></span>', context);
+```
 
-    Example:
+Produces:
 
-      ```javascript
-      var context = {
-        person: {
-          name: 'Tobi'
-        }
-      };
-      ```
-
-      ```html
-      <div oz="person">
-        <span oz-text="name">Tobi</span>
-      </div>
-      ```
-  * __Array__
-
-    Notation: `<div oz-each="people"></div>`
-
-    Usage: This node will be replicated for each element in `people`, and child nodes will be namespaced to that element
-
-    Example:
-
-      ```javascript
-      var context = {
-        people: [
-          'Tobi',
-          'Brian'
-        ]
-      };
-      ```
-
-      ```html
-      <div oz-each="people" oz-each-index="0">
-        <span oz-text="@">Tobi</span>
-      </div>
-      <div oz-each="people" oz-each-index="1">
-        <span oz-text="@">Brian</span>
-      </div>
-      ```
-  * __Boolean__
-
-    Notation: `<div oz-if="person.active"></div>`
-
-    Usage: This node will be hidden if the property is falsey, or not if it's truthy. Does not change context for child nodes.
-
-    Example:
-
-      ```javascript
-      var context = {
-        person: {
-          name: 'Tobi',
-          active: true
-        }
-      };
-      ```
-
-      ```html
-      <div oz-if="person.active">
-        <span oz-text="person.name">Tobi</span>
-      </div>
-      ```
-  * __String__
-
-    Notation: `<div oz-text="name"></div>`
-
-    Usage: Adds a text node to the current node with the string content of the named property
-
-    Example:
-
-      ```javascript
-      var context = {
-        name: 'Tobi'
-      };
-      ```
-
-      ```html
-      <span oz-text="name">Tobi</span>
-      ```
-  * __Attribute__
-
-    Notation: `<img oz-attr="src:imageUrl">`
-
-    Usage: Bind an attribute's value to the value of the named property
-
-    Example:
-
-      ```javascript
-      var context = {
-        imageUrl: "https://www.google.com/images/srpr/logo11w.png"
-      };
-      ```
-
-      ```html
-      <img oz-attr="src:imageUrl" src="https://www.google.com/images/srpr/logo11w.png">
-      ```
-  * __Form Value__
-
-    Notation: `<input oz-val="name">`
-
-    Usage: Bind a form element's value to a template property. See [Two-way Bindings](#two-way-bindings) for information on how to update the data model with data from the template.
-
-    Example: 
-
-      ```javascript
-      var context = {
-        name: "Tobi"
-      };
-      ```
-
-      ```html
-      <input oz-val="name" value="Tobi">
-      ```
-  * __Event__
-
-    Notation: `<button oz-evt="click:save">Save</button>`
-
-    Usage: Trigger an event on the template when an event occurs in the DOM. See [Events](#events) for more information.
-
-    Example:
-
-      ```javascript
-      template.on('save', saveHandler);
-      ```
-
-      ```html
-      <button oz-evt="click:save">Save</button>
-      ```
+```html
+<span oz-text="name">Tobi</span>
+```
 
 ### Updating a template
 Oz is completely agnostic to whatever you use to model your data. To let Oz know that your data model has updated, simple call the `update` method with the new data model. Oz smartly re-renders the template, so updating the entire data model is not as expensive as with other templating libraries.
@@ -220,7 +101,7 @@ person.set('firstName', 'J'); // template is now <span oz-text="firstName">J</sp
 ### Events
 Part of Oz's philosophy is to let applications push data into the DOM and receive meaningful events from the DOM without ever interacting with the DOM itself. This allows the application logic to be decoupled from the template, which acts as a View.
 
-To get events out of the DOM, you use the `oz-evt` tag, and define a DOM event as a key (e.g. `click`) and a more meaningful event as a value (e.g. `save`). The template will emit the more meaningful event every time the lower-level DOM event occurs. An example of how this might be used is shown below in Backbone:
+Any Oz tag can trigger a template event based on a lower level DOM event. The [`oz-evt` tag](http://github.com/treygriffith/oz-evt) allows you to define a DOM event as a key (e.g. `click`) and a more meaningful event as a value (e.g. `save`). The template will emit the more meaningful event every time the lower-level DOM event occurs. An example of how this might be used is shown below in Backbone:
 
 ```javascript
 var person = new Backbone.Model({
@@ -241,7 +122,7 @@ document.body.appendChild(personTemplate.render(person.attributes));
 
 
 ### Two-way Bindings
-Oz has an internal method for tags to notify the template that an attribute has changed. This is one case of an Oz event, and the Oz template notifies any listeners of the `change` event, as it would for any other event. This is used to bind models to changes in the template. The only default tag that uses this functionality is `oz-val`, but it could potentially be used by others.
+Oz has an internal method for tags to notify the template that an attribute has changed. This is one case of an Oz event, and the Oz template notifies any listeners of the `change` event, as it would for any other event. This is used to bind models to changes in the template. This binding is exemplified by the [`oz-val` tag](http://github.com/treygriffith/oz-val).
 
 Here again, Oz is totally agnostic to how you model your data, you simply have to listen for change events and set your data in whatever way it prefers. Using Backbone:
 
@@ -286,14 +167,44 @@ personTemplate.render(person); // outputs <span oz-text="fullName">Trey Griffith
 
 
 ## Extending Oz
-The default tags included with Oz are intended to take care of most templating use cases. However, to allow for additional uses, and for more efficient or feature-rich versions of existing tags, Oz is designed to allow additional tags to be added as first-class citizens. To add a tag, simply add a new property to the `Oz.tags` object with the following properties:
+Oz does not include any tags in its core. There are however, a few tags that were developed for a baseline Oz use case. Those tags are:
 
-* `attr` - the attribute to be used in the DOM (e.g. `oz-text`)
+* [oz-attr](http://github.com/treygriffith/oz-attr) Bind an attribute value to a property
+* [oz-each](http://github.com/treygriffith/oz-each) Render each element for each member of an Array
+* [oz-evt](http://github.com/treygriffith/oz-evt) Propagate events from the DOM to the template
+* [oz-if](http://github.com/treygriffith/oz-if) Boolean show/hide
+* [oz-scope](http://github.com/treygriffith/oz-scope) Scope child nodes to a property
+* [oz-text](http://github.com/treygriffith/oz-text) Render a text node
+* [oz-val](http://github.com/treygriffith/oz-val) Add a form value, and get notified when they change
+
+See the above libraries for examples of implementing a tag, but in short:
+
+The new tag should expose a plugin function that, when called with the Oz instance or constructor as the only parameter, will add the tag to the Oz instance or constructor. A tag is added by calling the `tag` method of the instance or constructor. `tag` takes 3 parameters:
+
+* `name` - the attribute to be used in the DOM (e.g. `oz-text`)
 * `render` - function responsible for modifying the node. It should accept 5 arguments:
   * `el` - DOM Node being rendered
   * `ctx` - the current context
   * `prop` - the value in the HTML attribute
   * `scope` - string representation of the current scope tree
   * `next` - function to be called when rendering is completed
+* `not` - Optional CSS select indicating tags with attribute `name` that should be ignored.
+
+An example plugin function might look like this:
+
+```javascript
+module.exports = function (Oz) {
+  Oz.tag('my-tag', render)
+}
+```
+
+The `render` function is called within the context of the Oz instance, so you have access to a number of important [utilities](lib/utils.js):
+
+* Oz#get: get the value of a property in a context
+* Oz#scope: get the textual representation of current scope
+* Oz#split: split a property into its constituent parts - similar to inline style declarations
+* Oz#hide: hide element (`display: 'none';`)
+* Oz#show: unhide element (`display: '';`)
+
 
 See the source for more information, as all the default tags are defined this way in [lib/tags.js](lib/tags.js).
