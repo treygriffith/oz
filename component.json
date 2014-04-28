@@ -15,6 +15,7 @@
   },
   "development": {
     "component/assert": "*",
+    "matthewp/text": "^0.0.2",
     "adamsanderson/trigger-event": "*"
   },
   "scripts": [
