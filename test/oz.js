@@ -4,6 +4,11 @@ var assert = require('assert');
 var text = require('text');
 var children = require('children');
 
+describe('Plugins', function(){
+  it('should add tags to the instance');
+  it('should add tags to all new instances');
+});
+
 describe('Rendering', function(){
 
   it('should allow access to the actual DOM node', function (){
@@ -19,6 +24,10 @@ describe('Rendering', function(){
     var fragment = template.render();
 
     assert(children(fragment)[0] === node);
+  });
+
+  it('should use @ to access the current context', function(){
+
   });
 
   it('should pass through undefined values as contexts', function(){
