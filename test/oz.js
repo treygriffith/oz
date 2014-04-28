@@ -47,6 +47,8 @@ describe('Rendering', function(){
   it('should render multiple props in one tag', function(){
     var template = Oz('<div oz-multiprops="prop1:name;prop2:active"></div>');
 
+    var context = { name: 'Tobi', active: true };
+
     template.tag('oz-multiprops', function (el, ctx, prop, scope, next) {
       var self = this;
 
@@ -54,9 +56,9 @@ describe('Rendering', function(){
         val = val != null ? self.get(ctx, val) : null;
 
         if(name === 'prop1') {
-          assert(val === 'Tobi');
+          assert(val === context.name);
         } else {
-          assert(val === 'something');
+          assert(val === context.active);
         }
       });
 
@@ -64,7 +66,7 @@ describe('Rendering', function(){
 
     });
 
-    template.render({ name: 'Tobi', active: true});
+    template.render(context);
   });
 
   it('should render multiple top level elements', function(){
@@ -134,13 +136,13 @@ describe("Updating", function() {
 
     var fragment = template.render({ name: 'Tobi' });
     var el = children(fragment)[0];
-    assert('Tobi' == text(children(el)[0]));
+    assert('Tobi' == text(el));
 
     document.body.appendChild(fragment);
 
-    template.update({ person: { name: 'Brian' } });
+    template.update({ name: 'Brian' });
 
-    assert('Brian' == text(children(el)[0]));
+    assert('Brian' == text(el));
   });
 });
 
@@ -180,6 +182,8 @@ describe("Events", function(){
         done();
       }
     });
+
+    template.render();
   });
 
 });
