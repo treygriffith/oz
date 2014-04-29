@@ -1,6 +1,6 @@
 {
   "name": "oz",
-  "version": "0.2.0-alpha.2",
+  "version": "0.2.0-alpha.3",
   "description": "Simple, extensible, declarative two-way binding templates",
   "dependencies": {
     "matthewp/attr": "*",
@@ -12,7 +12,8 @@
     "component/emitter": "1.1.2",
     "treygriffith/events": "0.1.0",
     "treygriffith/find-with-self": "0.1.0",
-    "component/matches-selector": "0.1.2"
+    "component/matches-selector": "0.1.2",
+    "treygriffith/matches-attribute": ""
   },
   "development": {
     "component/assert": "*",
