@@ -1,279 +1,252 @@
 
 var Oz = require('oz');
-var Emitter = require('emitter');
 var assert = require('assert');
-var trigger = require('trigger-event');
+var text = require('text');
+var children = require('children');
+
+describe('Plugins', function(){
+
+  it('should add tags to the instance', function (){
+    var template = Oz('<div></div>');
+
+    var render = function () {};
+    template.tag('oz-tag', render);
+
+    assert(template.tags['oz-tag'] === render);
+  });
+
+  it('should add tags to all new instances', function (){
+    var render = function () {};
+
+    Oz.tag('oz-universal', render);
+
+    var template = Oz('<div></div>');
+
+    assert(template.tags['oz-universal'] === render);
+  });
+});
 
 describe('Rendering', function(){
-  it('should set text values', function(){
-    var el = Oz.render('<div><p oz-text="name"></p></div>', { name: 'Tobi' }).children[0];
-    assert('Tobi' == el.children[0].textContent);
+
+  it('should allow access to the actual DOM node', function (){
+    var template = Oz('<div oz-node="name"></div>');
+
+    var node;
+
+    template.tag('oz-node', function (el, val) {
+      node = el;
+    });
+
+    var fragment = template.render();
+
+    assert(children(fragment)[0] === node);
   });
 
-  it('should set text values in the context of objects', function(){
-    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: { name: 'Tobi' }, name: 'John' }).children[0];
-    assert('Tobi' == el.children[0].textContent);
-  });
+  it('should use @ to access the current context', function(){
+    var template = Oz('<div oz-this="@"></div>');
 
-  it('should set text values as array elements', function(){
-    var el = Oz.render('<div oz-each="names"><p oz-text="@"></p></div>', { names: ['Tobi', 'Paul']}).children;
-    assert('Tobi' == el[0].children[0].textContent);
-    assert('Paul' == el[1].children[0].textContent);
-  });
+    template.tag('oz-this', function (el, val, scope, raw) {
+      assert(raw.ctx === val);
+    });
 
-  it('should use object values as array elements', function(){
-    var el = Oz.render('<div oz-each="people"><p oz-text="name"></p></div>', { people: [ {name: 'Tobi'}, {name: 'Paul'} ]}).children;
-    assert('Tobi' == el[0].children[0].textContent);
-    assert('Paul' == el[1].children[0].textContent);
-  });
-
-  it('should hide non-array-like objects that are `each`ed', function(){
-    var el = Oz.render('<div oz-each="people"><p oz-text="name"></p></div>', {}).children;
-    assert(el[0].style.display === 'none');
+    template.render({});
   });
 
   it('should pass through undefined values as contexts', function(){
-    var el = Oz.render('<div oz-each="people"><p oz-text="@"></p></div>', {people: [undefined, true]}).children;
-    assert(el[0].children[0].textContent === '');
-  });
+    var template = Oz('<div oz-undefined="name"></div>');
 
-  it('should not display undefined as a text or form value', function(){
-    var els = Oz.render('<div oz-text="name"></div><input oz-val="name">', {}).children;
+    template.tag('oz-undefined', function (el, val, scope, raw) {
+      assert(undefined == raw.ctx);
+      assert(undefined == val);
+    });
 
-    assert(els[0].textContent === '');
-    assert(els[1].value === '');
-  });
-
-  it('should hide elements that have falsey values', function(){
-    var el = Oz.render('<div oz-if="bool"></div>', { bool: false }).children;
-    assert(el[0].style.display === 'none');
-  });
-
-  it('should not change context for bool values', function(){
-    var el = Oz.render('<div oz-if="bool"><p oz-text="name"></p></div>', { name: 'Tobi', bool: true }).children;
-    assert('Tobi' == el[0].children[0].textContent);
+    template.render();
   });
 
   it('should allow access dot notation for value access', function(){
-    var el = Oz.render('<div oz-if="names.length"><p oz-text="text"></p></div>', { names: ['Tobi', 'Paul'], text: 'something'}).children;
-    assert('something' == el[0].children[0].textContent);
+    var template = Oz('<div oz-dot="names.length"></div>');
+
+    template.tag('oz-dot', function (el, val) {
+      assert(2 === val);
+    });
+
+    template.render({ names: ['Tobi', 'Paul'], text: 'something'});
   });
 
-  it('should not choke on undefined objects', function () {
-    var el = Oz.render('<div oz-if="names.length"></div>', {}).children[0];
-    assert(el.style.display === 'none');
-  })
+  /*
+  it('should render multiple props in one tag', function(){
+    var template = Oz('<div oz-multiprops="prop1:name;prop2:active"></div>');
 
-  it('should set attributes without changing context', function(){
-    var el = Oz.render('<div oz-attr="class:name"><p oz-text="text"></p></div>', { name: 'Tobi', text: 'something'}).children;
-    assert('Tobi' == el[0].className);
-    assert('something' == el[0].children[0].textContent);
+    var context = { name: 'Tobi', active: true };
+
+    template.tag('oz-multiprops', function (el, ctx, prop, scope) {
+      var self = this;
+
+      this.split(prop, function (name, val) {
+        val = val != null ? self.get(ctx, val) : null;
+
+        if(name === 'prop1') {
+          assert(val === context.name);
+        } else {
+          assert(val === context.active);
+        }
+      });
+
+    });
+
+    template.render(context);
   });
+  */
 
-  it('should render multiple attributes in one tag', function(){
-    var el = Oz.render('<div oz-attr="class:name;data-active:active"></div>', { name: 'Tobi', active: true}).children; 
-    assert('Tobi' == el[0].className);
-    assert('true' == el[0].getAttribute('data-active'));
+  it('should render multiple tags in one element', function(){
+    var template = Oz('<div oz-multitags="name" oz-multitags2="active"></div>');
+
+    var context = { name: 'Tobi', active: true };
+
+    template.tag('oz-multitags', function (el, val, scope) {
+      var self = this;
+
+      assert(val === context.name);
+
+    });
+
+    template.tag('oz-multitags2', function (el, val, scope) {
+      var self = this;
+
+      assert(val === context.active);
+
+    });
+
+    template.render(context);
   });
 
   it('should render multiple top level elements', function(){
-    var el = Oz.render('<p oz-text="name"></p><p oz-text="text"></p>', { name: 'Tobi', text: 'something'}).children;
-    assert('Tobi' == el[0].textContent);
-    assert('something' == el[1].textContent);
+    var template = Oz('<p oz-top1="name"></p><p oz-top2="text"></p>');
+
+    var node1, node2;
+
+    template.tag('oz-top1', function (el, val) {
+      node1 = el;
+
+      assert(val === 'Tobi');
+    });
+
+    template.tag('oz-top2', function (el, val) {
+      node2 = el;
+
+      assert(val === 'something');
+    });
+
+    var els = template.render({ name: 'Tobi', text: 'something'});
+
+    assert(node1 === children(els)[0]);
+    assert(node2 === children(els)[1]);
   });
 
   it('should call functions to get values', function(){
-    var el = Oz.render('<div oz="person"><p oz-text="name"></p></div>', { person: function () { return { name: 'Tobi' }; }}).children;
-    assert('Tobi' == el[0].children[0].textContent);
+    var template = Oz('<div oz-fn="person"></div>');
+
+    var person = { name: 'Tobi' };
+
+    template.tag('oz-fn', function (el, val) {
+
+      assert(val === person);
+
+    });
+
+    template.render({ person: function () { return person; }});
   });
 
-  it('should render form values', function(){
-    var el = Oz.render('<div oz="person"><input type="text" oz-val="name" /></div>', { person: { name: 'Tobi' } }).children[0];
-    assert('Tobi' == el.children[0].value);
+  it('should allow tags to change context for children', function(){
+    var template = Oz('<div oz-ctx="person"><div oz-test="name"></div></div>');
+
+    var person = { name: 'Tobi' };
+    var ctx = {
+      person: person
+    };
+
+    template.tag('oz-ctx', function (el, val, scope) {
+
+      return scope;
+    });
+
+    template.tag('oz-test', function (el, val) {
+      assert(val === person.name);
+    });
+
   });
+
 });
 
 describe("Updating", function() {
   it('should keep the same dom node when updating', function(){
     var template = Oz('<div></div>');
 
-    var el = template.render({}).children[0];
+    var el = children(template.render({}))[0];
     var el2 = template.update({})[0];
 
     assert(el === el2);
   });
 
-  it('should update text values', function(){
-
-    var template = Oz('<div><p oz-text="name"></p></div>');
-    var el = template.render({ name: 'Tobi' }).children[0];
-
-    assert('Tobi' == el.children[0].textContent);
-
-    template.update({ name: 'Brian' });
-
-    assert('Brian' == el.children[0].textContent);
-  });
-
-  it('should update text of a nested value', function(){
-
-    var template = Oz('<div oz="person"><p oz-text="name"></p></div>');
-    var el = template.render({ person: { name: 'Tobi' } }).children[0];
-
-    assert('Tobi' == el.children[0].textContent);
-
-    template.update({person: { name: 'Brian' }});
-
-    assert('Brian' == el.children[0].textContent);
-  });
-
-  it('should update text values as array elements', function(){
-
-    var template = Oz('<div oz-each="names"><p oz-text="@"></p></div>');
-    var el = template.render({ names: ['Tobi', 'Paul']}).children;
-    assert('Tobi' == el[0].children[0].textContent);
-    assert('Paul' == el[1].children[0].textContent);
-
-    template.update({names: ['Tobi', 'Brian']});
-
-    assert('Tobi' == el[0].children[0].textContent);
-    assert('Brian' == el[1].children[0].textContent);
-  });
-
-  it('should add new array elements', function(){
-    var template = Oz('<div oz-each="names"><p oz-text="@"></p></div>');
-    var el = template.render({ names: ['Tobi', 'Paul']}).children;
-
-    template.update({names: ['Tobi', 'Paul', 'Brian']});
-
-    assert('Brian' == el[2].children[0].textContent);
-  });
-
-  it('should remove deleted array elements', function(){
-    var template = Oz('<div oz-each="names"><p oz-text="@"></p></div>');
-    var el = template.render({ names: ['Tobi', 'Paul', 'Brian']}).children;
-
-    template.update({names: ['Tobi', 'Paul']});
-
-    assert(el[3] == null);
-    assert(el[2].children[0].textContent === '');
-  });
-
-  it('should show elements that have truthy values', function(){
-    var template = Oz('<div oz-if="bool"></div>');
-    var el = template.render({ bool: false }).children;
-    assert(el[0].style.display === 'none');
-
-    template.update({bool: true});
-    assert(el[0].style.display === '');
-  });
-
-  it('should update multiple attributes in one tag', function(){
-    var template = Oz('<div oz-attr="class:name;data-active:active"></div>');
-    var el = template.render({ name: 'Tobi', active: true}).children;
-    assert('Tobi' == el[0].className);
-    assert('true' == el[0].getAttribute('data-active'));
-
-    template.update({ name: 'Paul', active: false});
-    assert('Paul' == el[0].className);
-    assert('false' == el[0].getAttribute('data-active'));
-  });
-
-  it('should update form values', function(){
-
-    var template = Oz('<div oz="person"><input type="text" oz-val="name" /></div>');
-    var el = template.render({ person: { name: 'Tobi' } }).children[0];
-    assert('Tobi' == el.children[0].value);
-
-    template.update({ person: { name: 'Brian' } });
-
-    assert('Brian' == el.children[0].value);
-  });
-
-  it('should emit scoped form events', function (next) {
-    var template = Oz('<div oz="person"><input oz-val="name"></div>');
-
-    var el = template.render().children[0].children[0];
-
-    template.on('change:name', function () {
-      assert(false);
-    });
-
-    template.on('change:person.name', function () {
-      assert(true);
-      next();
-    });
-
-    el.value = 'Tobi';
-
-    trigger(el, 'change');
-  });
-
   it('should update elements after attaching to the DOM', function(){
-    var template = Oz('<div oz="person"><input type="text" oz-val="name" /></div>');
-    var fragment = template.render({ person: { name: 'Tobi' } });
-    var el = fragment.children[0];
-    assert('Tobi' == el.children[0].value);
+    var template = Oz('<div oz-text="name"></div>');
+
+    template.tag('oz-text', function (el, val) {
+      text(el, val);
+    });
+
+    var fragment = template.render({ name: 'Tobi' });
+    var el = children(fragment)[0];
+    assert('Tobi' == text(el));
 
     document.body.appendChild(fragment);
 
-    template.update({ person: { name: 'Brian' } });
+    template.update({ name: 'Brian' });
 
-    assert('Brian' == el.children[0].value);
+    assert('Brian' == text(el));
   });
 });
 
 describe("Events", function(){
-  it('should send a change event when a form value is updated', function(){
+  it('should send a change event to the template', function(done){
 
-  });
+    var template = Oz('<div oz-change="person.name"></div>');
+    var person = {
+      name: 'Brian'
+    };
 
-  it('should emit events based on DOM events', function(next){
-    var template = Oz('<div oz-evt="click:save"></div>');
-    var el = template.render().children[0];
-
-    template.on('save', function (_el) {
-      assert(_el === el);
-      next();
+    template.tag('oz-change', function (el, val, scope) {
+      var self = this;
+      setTimeout(function () {
+        self.change(scope, val);
+      }, 0);
     });
 
-    // simulate event
-    trigger(el, 'click');
-    
-  });
+    var changeDone = false;
+    var changeScopedDone = false;
 
-  it('should pass the current context to the event handler', function(next){
-    var template = Oz('<div oz-evt="click:save"></div>');
-    var person = { name: 'Tobi' };
-    var el = template.render(person).children[0];
+    template.on('change', function (scope, val) {
+      assert(scope === 'person.name');
+      assert(val === person.name);
 
-    template.on('save', function (_el, e, ctx) {
-      assert(ctx === person);
-      next();
+      changeDone = true;
+
+      if(changeDone && changeScopedDone) {
+        done();
+      }
     });
 
-    // simulate event
-    trigger(el, 'click');
-  });
+    template.on('change:person.name', function (val) {
+      assert(val === person.name);
 
-  it('should only execute one event, even after re-rendering', function(next){
-    var template = Oz('<div oz-evt="click:save;dblclick:delete"></div>');
-    var el = template.render().children[0];
-    template.update();
+      changeScopedDone = true;
 
-    var count = 0;
-
-    template.on('save', function () {
-      count++;
-      assert(count === 1);
+      if(changeDone && changeScopedDone) {
+        done();
+      }
     });
 
-    template.on('delete', function(){
-      next();
-    });
-
-    // simulate event
-    trigger(el, 'click');
-    trigger(el, 'dblclick');
+    template.render({ person: person });
   });
+
 });

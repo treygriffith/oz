@@ -1,30 +1,27 @@
 {
   "name": "oz",
-  "version": "0.0.2",
+  "version": "0.2.0",
   "description": "Simple, extensible, declarative two-way binding templates",
   "dependencies": {
-    "component/domify":"^1.2.2",
-    "treygriffith/closest": "^0.1.2",
-    "component/clone": "^0.2.2",
-    "component/matches-selector": "^0.1.2",
-    "treygriffith/css": "^0.0.6",
-    "component/emitter": "^1.1.2",
-    "treygriffith/events": "^0.1.0",
-    "ramitos/children": "*",
-    "treygriffith/siblings": "0.0.4",
-    "treygriffith/find-with-self": "^0.1.0",
     "matthewp/attr": "*",
-    "matthewp/text": "*",
-    "component/value": "^1.1.0"
+    "ramitos/children": "*",
+    "component/clone": "0.2.2",
+    "treygriffith/closest": "0.1.2",
+    "treygriffith/css": "0.0.6",
+    "component/domify": "1.2.2",
+    "component/emitter": "1.1.2",
+    "treygriffith/events": "0.1.0",
+    "treygriffith/find-with-self": "0.1.0",
+    "treygriffith/matches-attribute": "0.0.1"
   },
   "development": {
     "component/assert": "*",
+    "matthewp/text": "^0.0.2",
     "adamsanderson/trigger-event": "*"
   },
   "scripts": [
     "index.js",
     "lib/oz.js",
-    "lib/tags.js",
     "lib/utils.js"
   ],
   "main": "index.js"
