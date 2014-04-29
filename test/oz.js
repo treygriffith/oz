@@ -16,9 +16,8 @@ describe('Rendering', function(){
 
     var node;
 
-    template.tag('oz-node', function (el, ctx, prop, scope, next) {
+    template.tag('oz-node', function (el, ctx, prop, scope) {
       node = el;
-      next();
     });
 
     var fragment = template.render();
@@ -29,10 +28,8 @@ describe('Rendering', function(){
   it('should use @ to access the current context', function(){
     var template = Oz('<div oz-this="@"></div>');
 
-    template.tag('oz-this', function (el, ctx, prop, scope, next) {
+    template.tag('oz-this', function (el, ctx, prop, scope) {
       assert(ctx === this.get(ctx, prop));
-
-      next();
     });
 
     template.render({});
@@ -41,10 +38,9 @@ describe('Rendering', function(){
   it('should pass through undefined values as contexts', function(){
     var template = Oz('<div oz-undefined="name"></div>');
 
-    template.tag('oz-undefined', function (el, ctx, prop, scope, next) {
+    template.tag('oz-undefined', function (el, ctx, prop, scope) {
       assert(undefined == ctx);
       assert(undefined == this.get(ctx, prop));
-      next();
     });
 
     template.render();
@@ -53,9 +49,8 @@ describe('Rendering', function(){
   it('should allow access dot notation for value access', function(){
     var template = Oz('<div oz-dot="names.length"></div>');
 
-    template.tag('oz-dot', function (el, ctx, prop, scope, next) {
+    template.tag('oz-dot', function (el, ctx, prop, scope) {
       assert(2 === this.get(ctx, prop));
-      next();
     });
 
     template.render({ names: ['Tobi', 'Paul'], text: 'something'});
@@ -66,7 +61,7 @@ describe('Rendering', function(){
 
     var context = { name: 'Tobi', active: true };
 
-    template.tag('oz-multiprops', function (el, ctx, prop, scope, next) {
+    template.tag('oz-multiprops', function (el, ctx, prop, scope) {
       var self = this;
 
       this.split(prop, function (name, val) {
@@ -79,8 +74,6 @@ describe('Rendering', function(){
         }
       });
 
-      next();
-
     });
 
     template.render(context);
@@ -91,22 +84,20 @@ describe('Rendering', function(){
 
     var node1, node2;
 
-    template.tag('oz-top1', function (el, ctx, prop, scope, next) {
+    template.tag('oz-top1', function (el, ctx, prop, scope) {
       var val = this.get(ctx, prop);
 
       node1 = el;
 
       assert(val === 'Tobi');
-      next();
     });
 
-    template.tag('oz-top2', function (el, ctx, prop, scope, next) {
+    template.tag('oz-top2', function (el, ctx, prop, scope) {
       var val = this.get(ctx, prop);
 
       node2 = el;
 
       assert(val === 'something');
-      next();
     });
 
     var els = template.render({ name: 'Tobi', text: 'something'});
@@ -120,15 +111,39 @@ describe('Rendering', function(){
 
     var person = { name: 'Tobi' };
 
-    template.tag('oz-fn', function (el, ctx, prop, scope, next) {
+    template.tag('oz-fn', function (el, ctx, prop, scope) {
       var val = this.get(ctx, prop);
 
       assert(val === person);
 
-      next();
     });
 
     template.render({ person: function () { return person; }});
+  });
+
+  it('should allow tags to change context for children', function(){
+    var template = Oz('<div oz-ctx="person"><div oz-test="name"></div></div>');
+
+    var person = { name: 'Tobi' };
+    var ctx = {
+      person: person
+    };
+
+    template.tag('oz-ctx', function (el, ctx, prop, scope) {
+      var val = this.get(ctx, prop);
+
+      return {
+        scope: this.scope(scope, prop),
+        ctx: val
+      };
+    });
+
+    template.tag('oz-test', function (el, ctx, prop, scope) {
+
+      assert(ctx === person);
+      assert(scope === 'person');
+    });
+
   });
 
 });
@@ -146,9 +161,8 @@ describe("Updating", function() {
   it('should update elements after attaching to the DOM', function(){
     var template = Oz('<div oz-text="name"></div>');
 
-    template.tag('oz-text', function (el, ctx, prop, scope, next) {
+    template.tag('oz-text', function (el, ctx, prop, scope) {
       text(el, this.get(ctx, prop));
-      next();
     });
 
     var fragment = template.render({ name: 'Tobi' });
@@ -169,7 +183,7 @@ describe("Events", function(){
     var template = Oz('<div oz-change="person.name"></div>');
     var name = 'Brian';
 
-    template.tag('oz-change', function (el, ctx, prop, scope, next) {
+    template.tag('oz-change', function (el, ctx, prop, scope) {
       var self = this;
       setTimeout(function () {
         self.change(self.scope(scope, prop), name);
