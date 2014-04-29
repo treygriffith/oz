@@ -157,6 +157,20 @@ describe('Rendering', function(){
     template.render({ person: function () { return person; }});
   });
 
+  it('should call functions in the right context', function(){
+    var template = Oz('<div oz-fn="person.name"></div>');
+
+    var person = { firstName: 'Tobi', lastName: 'Magoo', name: function () { return firstName + lastName; } };
+
+    template.tag('oz-fn', function (el, val) {
+
+      assert(this === person);
+
+    });
+
+    template.render({ person: person });
+  });
+
   it('should allow tags to change context for children', function(){
     var template = Oz('<div oz-ctx="person"><div oz-test="name"></div></div>');
 

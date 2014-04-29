@@ -2,11 +2,54 @@ Oz.js
 =====
 Oz.js is a lightweight†, simple, declarative templating method with built-in events, two-way bindings, and efficient rendering.
 
+```javascript
+
+var template = Oz('<div oz-scope="person">' +
+                    '<input type="text" oz-val="name" /><br>' +
+                    '<button oz-evt-click="save">' +
+                  '</div>');
+
+var person = {
+  firstName: "Trey",
+  lastName: "Griffith",
+  name: function () {
+    return this.firstName + " " + this.lastName;
+  }
+};
+
+template.on('change:person', function (key, val) {
+  person[key] = val;
+});
+
+template.on('save', function () {
+  // save person somewhere
+});
+
+document.body.appendChild(template.render(person));
+
+// renders:
+// <div oz-scope="person">
+//   <input type="text" oz-val="name" value="Trey Griffith" /><br>
+//   <button oz-evt-click="save">
+// </div>
+
+person.firstName = "Terry";
+
+template.update(person);
+
+// updates in place to:
+// <div oz-scope="person">
+//   <input type="text" oz-val="name" value="Terry Griffith" /><br>
+//   <button oz-evt-click="save">
+// </div>
+
+```
+
 It is built on a philosophy of:
 
 1. taking advantage of the DOM instead of string manipulation
-2. making the minimum amount of DOM changes as possible to increase rendering speed
-3. not adding template-specific DOM nodes to the DOM tree
+2. making the minimum number of DOM changes to increase rendering speed
+3. using HTML attributes to make templates easily render-able from the server
 4. being completely agnostic to any other part of the application (i.e. modeling, routing, etc)
 5. letting the application never touch the DOM
 
@@ -72,9 +115,11 @@ Produces:
 Oz is completely agnostic to whatever you use to model your data. To let Oz know that your data model has updated, simple call the `update` method with the new data model. Oz smartly re-renders the template, so updating the entire data model is not as expensive as with other templating libraries.
 
 ```javascript
-var template = Oz('<div oz="person"><span oz-text="name"></span></div>');
-template.render({ person: { name: "Tobi" } }); // outputs <div oz="person"><span oz-text="name">Tobi</span></div>
-template.update({ person: { name: "Fred" } }); // updates existing node to <div oz="person"><span oz-text="name">Fred</span></div>
+var template = Oz('<div oz-scope="person"><span oz-text="name"></span></div>');
+template.render({ person: { name: "Tobi" } });
+// outputs <div oz-scope="person"><span oz-text="name">Tobi</span></div>
+template.update({ person: { name: "Fred" } });
+// updates existing node to <div oz-scope="person"><span oz-text="name">Fred</span></div>
 ```
 
 In a practical sense, you don't want to be manually updating your templates. Instead you should hook up the update function as a listener for change events on your data model. For instance, if you were using Backbone to model your data, you might have a set up like this:
@@ -93,10 +138,12 @@ person.on('change', function (model) {
 });
 
 // render the initial template
-document.body.appendChild(personTemplate.render(person.attributes)); // outputs <span oz-text="firstName">Jeremy</span><span oz-text="lastName">Ashkenas</span>
+document.body.appendChild(personTemplate.render(person.attributes));
+// outputs <span oz-text="firstName">Jeremy</span><span oz-text="lastName">Ashkenas</span>
 
 // update one of the attributes
-person.set('firstName', 'J'); // template is now <span oz-text="firstName">J</span><span oz-text="lastName">Ashkenas</span>
+person.set('firstName', 'J');
+// template is now <span oz-text="firstName">J</span><span oz-text="lastName">Ashkenas</span>
 
 ```
 
@@ -111,7 +158,7 @@ var person = new Backbone.Model({
   lastName: "Ashkenas"
 });
 
-var personTemplate = Oz('<input oz-val="firstName"><br><input oz-val="lastName"><br><button oz-evt="click:save">Save</button>');
+var personTemplate = Oz('<input oz-val="firstName"><br><input oz-val="lastName"><br><button oz-evt-click="save">Save</button>');
 
 // listen for save events
 personTemplate.on('save', function () {
@@ -169,6 +216,8 @@ personTemplate.render(person); // outputs <span oz-text="fullName">Trey Griffith
 
 
 ## Extending Oz
+
+# Tags
 Oz does not include any tags in its core. There are however, a few tags that were developed for a baseline Oz use case, and are included in the [Oz Bundle](http://github.com/treygriffith/oz-bundle). Those tags are:
 
 * [oz-attr](http://github.com/treygriffith/oz-attr) Bind an attribute value to a property
@@ -183,14 +232,16 @@ See the above libraries for examples of implementing a tag, but in short:
 
 The new tag should expose a plugin function that, when called with the Oz instance or constructor as the only parameter, will add the tag to the Oz instance or constructor. A tag is added by calling the `tag` method of the instance or constructor. `tag` takes 3 parameters:
 
-* `name` - the attribute to be used in the DOM (e.g. `oz-text`)
-* `render` - function responsible for modifying the node. It should accept 5 arguments:
-  * `el` - DOM Node being rendered
-  * `ctx` - the current context
-  * `prop` - the value in the HTML attribute
-  * `scope` - string representation of the current scope tree
-  * `next` - function to be called when rendering is completed
-* `not` - Optional CSS select indicating tags with attribute `name` that should be ignored.
+* `name` - the attribute to be used in the DOM (e.g. `oz-text`, or `oz-evt-*`)
+* `render` - function responsible for modifying the node. It can accept 4 arguments:
+  * `el` - DOM Node being rendered (e.g. <div oz-scope="person"></div>)
+  * `val` - the value of the attribute given the context (e.g. { name: "Brian" })
+  * `scope` - the scope of the attribute given the context (e.g. "person" )
+  * `raw` - an Object with the raw arguments
+    * `ctx` - the current context (e.g. { person: { name: "Brian" } })
+    * `name` - the name of the HTML attribute (e.g. `oz-scope`)
+    * `prop` - the value in the HTML attribute (e.g. "person")
+    * `scope` - the scope tree prior to this attribute (e.g. "")
 
 An example plugin function might look like this:
 
@@ -210,3 +261,7 @@ The `render` function is called within the context of the Oz instance, so you ha
 
 
 See the source for more information, as all the default tags are defined this way in [lib/tags.js](lib/tags.js).
+
+# Bindings
+
+TODO
