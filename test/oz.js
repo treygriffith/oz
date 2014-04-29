@@ -5,8 +5,25 @@ var text = require('text');
 var children = require('children');
 
 describe('Plugins', function(){
-  it('should add tags to the instance');
-  it('should add tags to all new instances');
+
+  it('should add tags to the instance', function (){
+    var template = Oz('<div></div>');
+
+    var render = function () {};
+    template.tag('oz-tag', render);
+
+    assert(template.tags['oz-tag'] === render);
+  });
+
+  it('should add tags to all new instances', function (){
+    var render = function () {};
+
+    Oz.tag('oz-universal', render);
+
+    var template = Oz('<div></div>');
+
+    assert(template.tags['oz-universal'] === render);
+  });
 });
 
 describe('Rendering', function(){
