@@ -217,7 +217,7 @@ personTemplate.render(person); // outputs <span oz-text="fullName">Trey Griffith
 
 ## Extending Oz
 
-# Tags
+### Tags
 Oz does not include any tags in its core. There are however, a few tags that were developed for a baseline Oz use case, and are included in the [Oz Bundle](http://github.com/treygriffith/oz-bundle). Those tags are:
 
 * [oz-attr](http://github.com/treygriffith/oz-attr) Bind an attribute value to a property
@@ -234,14 +234,14 @@ The new tag should expose a plugin function that, when called with the Oz instan
 
 * `name` - the attribute to be used in the DOM (e.g. `oz-text`, or `oz-evt-*`)
 * `render` - function responsible for modifying the node. It can accept 4 arguments:
-  * `el` - DOM Node being rendered (e.g. <div oz-scope="person"></div>)
-  * `val` - the value of the attribute given the context (e.g. { name: "Brian" })
-  * `scope` - the scope of the attribute given the context (e.g. "person" )
+  * `el` - DOM Node being rendered (e.g. `<div oz-scope="person"></div>`)
+  * `val` - the value of the attribute given the context (e.g. `{ name: "Brian" }`)
+  * `scope` - the scope of the attribute given the context (e.g. `"person"` )
   * `raw` - an Object with the raw arguments
-    * `ctx` - the current context (e.g. { person: { name: "Brian" } })
+    * `ctx` - the current context (e.g. `{ person: { name: "Brian" } }`)
     * `name` - the name of the HTML attribute (e.g. `oz-scope`)
-    * `prop` - the value in the HTML attribute (e.g. "person")
-    * `scope` - the scope tree prior to this attribute (e.g. "")
+    * `prop` - the value in the HTML attribute (e.g. `"person"`)
+    * `scope` - the scope tree prior to this attribute (e.g. `""`)
 
 An example plugin function might look like this:
 
@@ -254,14 +254,13 @@ module.exports = function (Oz) {
 The `render` function is called within the context of the Oz instance, so you have access to a number of important [utilities](lib/utils.js):
 
 * Oz#get: get the value of a property in a context
-* Oz#scope: get the textual representation of current scope
-* Oz#split: split a property into its constituent parts - similar to inline style declarations
+* Oz#scope: get the textual representation of a scope tree with a property added
 * Oz#hide: hide element (`display: 'none';`)
 * Oz#show: unhide element (`display: '';`)
 
 
 See the source for more information, as all the default tags are defined this way in [lib/tags.js](lib/tags.js).
 
-# Bindings
+### Bindings
 
 TODO
